@@ -1,0 +1,8 @@
+// TEL-Manual credits list. Same format as the live one on the VPS:
+// "# Heading" starts a group, one name per line, "Name | Role" adds a role line.
+// The "# Guests" group fills itself from manual.json; names typed here are a backup.
+# Host
+Ceema | Space Journalist
+# Guests
+# Thanks
+The This EVE Life Discord

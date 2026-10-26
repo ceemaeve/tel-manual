@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>This EVE Life · Credits</title>
+<meta name="viewport" content="width=1920,height=1080">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap">
+<style>
+  /* OBS Browser Source: 1920 x 1080. Full-screen scene, no other sources needed.
+     What it does, in order:
+       1. After a short delay, the credits scroll up and the music (credits/music.mp3) starts.
+       2. The music fades out over the last seconds of the scroll.
+       3. When the scroll ends, the show bumper (credits/bumper.mp4) fades in and plays once.
+     Guests fill themselves in from the Discord calendar (the same "Guests:" line the camera scenes use).
+     Everyone else comes from credits-names.txt next to this file (edit that file, not this one).
+     Turn on "Refresh browser when scene becomes active" so it restarts every time the scene is shown.
+     URL options (all optional, add to the end of the Browser Source URL):
+       ?speed=90        scroll speed in pixels per second (default 80)
+       ?dur=120         make the scroll last exactly this many seconds (overrides speed)
+       ?fit=audio       make the scroll last as long as the music file
+       ?delay=1.5       seconds to wait before starting (default 1)
+       ?fade=4          seconds the music fades out at the end of the scroll (default 3)
+       ?vol=0.7         music volume 0 to 1 (default 0.8)
+       ?bvol=0.5        bumper video volume 0 to 1 (default 0.6; lower it if the bumper is louder than the song)
+       ?guests=A;B      type the guests yourself (otherwise they come from the Discord event's Guests: line)
+       ?now=2026-10-10T20:30Z  test clock, acts as if it were that time (UTC)
+       ?list=other.txt  use a different names file
+       ?audio=URL       use a different music file     ?bumper=URL   use a different bumper file
+       ?bumper=off      stop after the scroll (no bumper)
+       ?after=clear     fade the bumper out to black when it ends (default: hold the last frame)
+       ?guide=1         show a small status readout (phase and seconds) while testing
+     In a normal browser (not OBS) sound is blocked until you click the page once. */
+  :root{
+    --void:#03060e; --panel:#09142c; --edge:#1c2c4d;
+    --blue:#2e8bff; --cyan:#35d6ff; --magenta:#f22dc8; --pink:#ff5cc8;
+    --text-hi:#fff; --text-mid:#c9d6ee; --text-dim:#8b98b8; --text-faint:#7a89ad;
+    --display:'Orbitron',system-ui,sans-serif;
+    --body:'Rajdhani',system-ui,sans-serif;
+    --mono:'Share Tech Mono',ui-monospace,monospace;
+    --glow-pink:0 0 30px #f22dc866,0 0 6px #ff5cc8cc;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:1920px;height:1080px;overflow:hidden;background:var(--void)}
+  body{color:var(--text-mid);font-family:var(--body)}
+
+  .stage{position:relative;width:1920px;height:1080px;overflow:hidden;transform-origin:0 0;
+    background:
+      radial-gradient(ellipse at 18% 0%,#12245a55 0%,transparent 55%),
+      radial-gradient(ellipse at 85% 10%,#3a0f4d4d 0%,transparent 50%),
+      radial-gradient(ellipse at 50% 110%,#02218a33 0%,transparent 60%),
+      linear-gradient(#2e8bff10 1px,transparent 1px),
+      linear-gradient(90deg,#2e8bff10 1px,transparent 1px),
+      var(--void);
+    background-size:auto,auto,auto,56px 56px,56px 56px,auto;
+  }
+  .corner{position:absolute;width:70px;height:70px;border:0 solid var(--edge);z-index:3}
+  .corner.tl{top:36px;left:36px;border-top-width:2px;border-left-width:2px}
+  .corner.tr{top:36px;right:36px;border-top-width:2px;border-right-width:2px}
+  .corner.bl{bottom:36px;left:36px;border-bottom-width:2px;border-left-width:2px}
+  .corner.br{bottom:36px;right:36px;border-bottom-width:2px;border-right-width:2px}
+
+  /* the scrolling window: names fade in at the bottom and out at the top */
+  .window{position:absolute;inset:0;overflow:hidden;
+    -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 170px,#000 910px,transparent 1080px);
+            mask-image:linear-gradient(180deg,transparent 0,#000 170px,#000 910px,transparent 1080px)}
+  #roll{position:absolute;left:0;width:1920px;top:0;display:flex;flex-direction:column;align-items:center;
+    will-change:transform;transform:translateY(1080px)}
+
+  .title{font-family:var(--display);font-weight:900;font-size:96px;letter-spacing:.12em;line-height:1.2;
+    background:linear-gradient(180deg,#fff 0%,#dfe7f2 45%,#a9b6cf 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .rule{width:400px;height:2px;margin:26px 0 0;
+    background:linear-gradient(90deg,transparent,var(--pink),var(--magenta),transparent);box-shadow:var(--glow-pink)}
+  .group{display:flex;flex-direction:column;align-items:center;margin-top:130px}
+  .gh{display:flex;align-items:center;gap:16px;margin-bottom:46px;
+    font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.32em;text-transform:uppercase;color:var(--cyan)}
+  .gh::before,.gh::after{content:"";width:10px;height:10px;background:var(--cyan);box-shadow:0 0 10px var(--cyan)}
+  .entry{display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:30px;text-align:center}
+  .nm{font-family:var(--body);font-weight:700;font-size:62px;line-height:1.1;letter-spacing:.04em;color:var(--text-hi);max-width:1500px}
+  .rl{font-family:var(--mono);font-size:26px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim);max-width:1500px}
+
+  .end{display:flex;flex-direction:column;align-items:center;margin-top:230px;gap:22px;padding-bottom:20px}
+  .wordmark{font-family:var(--display);font-weight:800;font-size:64px;letter-spacing:.14em;color:var(--text-hi)}
+  .wordmark span{color:var(--pink)}
+  .thanks{font-size:34px;font-weight:500;color:var(--text-dim);letter-spacing:.02em}
+  .site{font-family:var(--mono);font-size:26px;letter-spacing:.2em;color:var(--text-dim);text-transform:uppercase}
+  .music{margin-top:18px;font-size:28px;font-weight:500;letter-spacing:.04em;color:var(--text-dim)}
+
+  /* bumper video sits on top and fades in when the scroll is done */
+  #bumper{position:absolute;inset:0;width:1920px;height:1080px;object-fit:contain;background:#000;
+    opacity:0;transition:opacity .6s ease;z-index:5;pointer-events:none}
+  #bumper.on{opacity:1}
+
+  /* helper readouts (only with ?guide=1 or when the browser blocks sound) */
+  #hud{display:none;position:absolute;left:36px;bottom:110px;z-index:9;padding:10px 16px;background:#000c;
+    border:1px solid var(--edge);font:22px/1.4 'Share Tech Mono',Consolas,monospace;color:var(--cyan);white-space:pre}
+  .guide #hud{display:block}
+  #tap{display:none;position:absolute;inset:0;z-index:10;background:#03060ed9;cursor:pointer;
+    align-items:center;justify-content:center;font:800 54px/1.3 'Orbitron',system-ui,sans-serif;letter-spacing:.1em;color:#fff;text-align:center}
+  #tap small{display:block;margin-top:14px;font:500 26px 'Rajdhani',system-ui,sans-serif;letter-spacing:.04em;color:var(--text-dim)}
+  #tap.show{display:flex}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+  <div class="window"><div id="roll"></div></div>
+  <video id="bumper" playsinline preload="auto"></video>
+  <div id="hud"></div>
+  <div id="tap">CLICK TO START<small>This browser blocks sound until you click. OBS does not.</small></div>
+</div>
+<audio id="music" preload="auto"></audio>
+
+<script>
+(function(){
+  var q; try{ q=new URLSearchParams(location.search); }catch(e){ q={get:function(){return null}}; }
+  // ?src=manual: TEL-Manual backup. Read manual.json next to this page instead of the VPS feed;
+  // no avatars. Without it the page behaves exactly as before.
+  var MANUAL=q.get('src')==='manual';
+  function num(k,d){var v=parseFloat(q.get(k));return isNaN(v)?d:v;}
+  var SPEED=num('speed',80), DUR=num('dur',0), DELAY=num('delay',1), FADE=num('fade',3), VOL=Math.max(0,Math.min(1,num('vol',0.8))), BVOL=Math.max(0,Math.min(1,num('bvol',0.6)));
+  var LIST=q.get('list')||'credits-names.txt';
+  var AUDIO=q.get('audio')||'credits/music.mp3';
+  var BUMPER=q.get('bumper')===null?'credits/bumper.mp4':q.get('bumper');
+  var NO_BUMPER=(BUMPER==='off'||BUMPER==='0'||BUMPER==='');
+  var AFTER=q.get('after')==='clear'?'clear':'hold';
+  var FIT_AUDIO=q.get('fit')==='audio';
+  if(/[?&]guide=1/.test(location.search)) document.body.classList.add('guide');
+
+  var roll=document.getElementById('roll'), music=document.getElementById('music'),
+      bumper=document.getElementById('bumper'), hud=document.getElementById('hud'), tap=document.getElementById('tap');
+  var phase='loading', t0=0, yStart=1080, yEnd=0, duration=0, musicOk=true, fadeStarted=false;
+
+  /* ---------- guests from the Discord calendar (same feed and timing rule as the camera scenes) ----------
+     The "# Guests" group is filled from the "Guests:" line of the show that is on now, or that ended in the
+     last 30 minutes. One guest on the event means one name here. Override: ?guests=Name;Name */
+  var FEED_URL=MANUAL?'manual.json':'/api/public/feed', HOLD_MS=30*60*1000, LEAD_MS=90*60*1000, MEMO_KEY='tel-last-show';
+  var SKIP_RE=/no\s*show|vacation|to\s*be\s*booked|\bTBB\b|cancel/i;
+  var TEST_NOW=q.get('now')?Date.parse(q.get('now')):NaN, CLOCK_OFF=isNaN(TEST_NOW)?0:TEST_NOW-Date.now();
+  function nowMs(){return Date.now()+CLOCK_OFF;}
+  if(!isNaN(TEST_NOW)){                  // visible reminder so a test clock never goes out on stream
+    var tb=document.createElement('div');
+    tb.style.cssText='position:fixed;top:12px;right:12px;z-index:99;padding:8px 14px;background:#ffb648;color:#1a1000;font:700 22px/1 Consolas,monospace;letter-spacing:.06em';
+    tb.textContent='TEST CLOCK '+new Date(TEST_NOW).toISOString().slice(0,16).replace('T',' ')+' UTC'; document.body.appendChild(tb);
+  }
+  function pickShow(xs,now){             // same rule as every TEL overlay
+    var live=xs.filter(function(x){return now>=x.at&&now<x.end;})[0];
+    if(live) return {x:live,state:'live'};
+    var nx=xs.filter(function(x){return x.at>now;})[0];
+    var held=xs.filter(function(x){return now>=x.end&&now<x.end+HOLD_MS;}).sort(function(a,b){return b.end-a.end;})[0];
+    if(held&&!(nx&&nx.at<held.end+HOLD_MS)) return {x:held,state:'held'};
+    return nx?{x:nx,state:'next'}:null;
+  }
+  function namesOf(str){return String(str||'').split(/[;\n]/).map(function(x){return x.trim();}).filter(Boolean);}
+  function guestsOf(show){
+    if(Array.isArray(show.guests)) return show.guests.map(function(g){return typeof g==='string'?g.trim():String(g&&g.name||'').trim();}).filter(Boolean);
+    var m=/Guests?\s*:\s*([^\n]+)/i.exec(show.desc||'');
+    return m?namesOf(m[1].replace(/…$/,'')):[];
+  }
+  function currentShow(list){
+    var now=nowMs();
+    var xs=(list||[]).filter(function(s){return !SKIP_RE.test(s.name||'');}).map(function(s){var at=Date.parse(s.at);return {s:s,at:at,end:s.endAt?Date.parse(s.endAt):at+3*3600e3};})
+      .filter(function(x){return !isNaN(x.at);}).sort(function(a,b){return a.at-b.at;});
+    var p=pickShow(xs,now);
+    if(!p||(p.state==='next'&&p.x.at-now>LEAD_MS)) return null;
+    return p.x;
+  }
+  function recalled(){                   // backup written by the camera scenes on the same site
+    try{ var m=JSON.parse(localStorage.getItem(MEMO_KEY)||'null'); var now=nowMs();
+      return m&&now>=(m.at||m.end)-LEAD_MS&&now<m.end+HOLD_MS?(m.guests||[]).map(function(g){return typeof g==='string'?g:g.name;}).filter(Boolean):null; }catch(e){ return null; }
+  }
+  function loadGuests(cb){               // always calls cb(array of names) within ~4 seconds
+    var o=q.get('guests'); if(o){cb(namesOf(o));return;}
+    var done=false, fin=function(g){if(!done){done=true;cb(g||[]);}};
+    setTimeout(function(){fin(recalled());},4000);
+    fetch(FEED_URL,{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){
+      var cur=currentShow(d.nextShows); fin(cur?guestsOf(cur.s):(recalled()||[]));
+    }).catch(function(){fin(recalled());});
+  }
+
+  /* ---------- names file ----------
+     "# Heading" starts a group. Every other line is one name. Blank lines and lines starting with // are ignored.
+     The group called "Guests" is filled from the calendar; names typed under it are only a backup for when the
+     calendar has no guests. A group with no names is left out. */
+  var SAMPLE='# Guests\n\n# Special Thanks\nEveryone in the chat';
+  function build(text,guestNames){
+    var groups=[], cur=null;
+    text.split(/\r?\n/).forEach(function(raw){
+      var line=raw.trim();
+      if(!line||line.indexOf('//')===0) return;
+      if(line.charAt(0)==='#'){cur={h:line.replace(/^#+\s*/,''),items:[]};groups.push(cur);return;}
+      if(!cur){cur={h:'',items:[]};groups.push(cur);}
+      var p=line.split('|');
+      cur.items.push({n:p[0].trim(),r:(p[1]||'').trim()});
+    });
+    groups.forEach(function(g){
+      if(/^guests?$/i.test(g.h)&&guestNames&&guestNames.length) g.items=guestNames.map(function(n){return {n:n,r:''};});
+    });
+    groups=groups.filter(function(g){return g.items.length;});
+    function el(t,c,x){var n=document.createElement(t);if(c)n.className=c;if(x!=null)n.textContent=x;return n;}
+    roll.textContent='';
+    roll.appendChild(el('div','title','CREDITS'));
+    roll.appendChild(el('div','rule'));
+    groups.forEach(function(g){
+      var d=el('div','group');
+      if(g.h) d.appendChild(el('div','gh',g.h));
+      g.items.forEach(function(it){
+        var e=el('div','entry'); e.appendChild(el('div','nm',it.n));
+        if(it.r) e.appendChild(el('div','rl',it.r));
+        d.appendChild(e);
+      });
+      roll.appendChild(d);
+    });
+    var end=el('div','end'); end.id='endblock';
+    var w=el('div','wordmark'); w.appendChild(document.createTextNode('THIS ')); var s=el('span',null,'EVE'); w.appendChild(s); w.appendChild(document.createTextNode(' LIFE'));
+    end.appendChild(w);
+    end.appendChild(el('div','thanks','Thanks for flying with us.'));
+    end.appendChild(el('div','site','thisevelife.space'));
+    end.appendChild(el('div','music','Music - StreamBeats by Harris Heller'));
+    roll.appendChild(end);
+  }
+  function loadNames(cb){
+    var text=null, guests=null;
+    function both(){ if(text!==null&&guests!==null){ build(text,guests); cb(); } }
+    fetch(LIST,{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.text();}).catch(function(){return SAMPLE;})
+      .then(function(t){text=t;both();});
+    loadGuests(function(g){guests=g;both();});
+  }
+
+  /* ---------- timeline ---------- */
+  function measure(){
+    var end=document.getElementById('endblock');
+    var centre=end.offsetTop+end.offsetHeight/2;   // scroll until the closing logo block is centred
+    yStart=1080; yEnd=540-centre;
+    var dist=yStart-yEnd;
+    if(FIT_AUDIO && isFinite(music.duration) && music.duration>0) duration=music.duration;
+    else if(DUR>0) duration=DUR;
+    else duration=dist/Math.max(10,SPEED);
+  }
+  function log(s){ if(document.body.classList.contains('guide')) hud.textContent=s; }
+
+  function startAudio(){
+    if(!music.src) return;
+    music.volume=VOL; music.loop=true; music.currentTime=0;
+    var p=music.play();
+    if(p&&p.catch) p.catch(function(err){ musicOk=false; if(err&&err.name==='NotAllowedError') tap.classList.add('show'); else log('music problem: '+(err&&err.name)+' ('+AUDIO+')'); });
+  }
+  function playBumper(){
+    if(NO_BUMPER||bumperFailed){ phase='done'; return; }
+    phase='bumper';
+    bumper.currentTime=0;
+    bumper.volume=BVOL;
+    bumper.classList.add('on');
+    var p=bumper.play();
+    if(p&&p.catch) p.catch(function(err){ if(err&&err.name==='NotAllowedError') tap.classList.add('show'); });
+  }
+  bumper.addEventListener('ended',function(){ phase='done'; if(AFTER==='clear') bumper.classList.remove('on'); });
+  // if the MP4 can't play, try a .webm with the same name; if that fails too, leave the credits on screen
+  var triedWebm=false, bumperFailed=false;
+  bumper.addEventListener('error',function(){
+    if(!triedWebm && /\.mp4(\?.*)?$/i.test(BUMPER)){
+      triedWebm=true; bumper.src=BUMPER.replace(/\.mp4/i,'.webm'); bumper.load();
+      if(phase==='bumper'){ var p=bumper.play(); if(p&&p.catch) p.catch(function(){}); }
+      return;
+    }
+    bumperFailed=true; bumper.classList.remove('on'); if(phase==='bumper') phase='done'; log('bumper failed to load: '+BUMPER);
+  });
+
+  function frame(now){
+    if(phase==='scroll'){
+      var t=(now-t0)/1000;
+      if(t<0){ requestAnimationFrame(frame); return; }
+      var k=Math.min(1,t/duration);
+      roll.style.transform='translateY('+(yStart+(yEnd-yStart)*k)+'px)';
+      var left=duration-t;
+      if(music.src && left<=FADE && FADE>0) music.volume=Math.max(0,VOL*(left/FADE));
+      log('SCROLL  '+t.toFixed(1)+' / '+duration.toFixed(1)+' s');
+      if(k>=1){
+        music.pause();
+        phase='hold'; setTimeout(playBumper,400);
+      }
+    } else if(phase==='bumper'){
+      log('BUMPER  '+bumper.currentTime.toFixed(1)+' / '+(bumper.duration||0).toFixed(1)+' s');
+    } else if(phase==='done'){
+      log('DONE');
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function begin(){
+    measure();
+    phase='scroll';
+    t0=performance.now()+DELAY*1000;
+    setTimeout(startAudio,DELAY*1000);
+  }
+  tap.addEventListener('click',function(){
+    tap.classList.remove('show');
+    if(phase==='scroll'||phase==='loading') { try{music.play();}catch(e){} }
+    if(phase==='bumper'){ try{bumper.play();}catch(e){} }
+  });
+
+  /* fonts first so the measured height is right, then wait briefly for the music length if ?fit=audio */
+  if(!NO_BUMPER) bumper.src=BUMPER;
+  if(AUDIO&&AUDIO!=='off') music.src=AUDIO;
+  var ready=0;
+  function go(){
+    if(++ready<2) return;
+    begin();
+  }
+  loadNames(function(){
+    if(document.fonts&&document.fonts.ready) document.fonts.ready.then(go); else go();
+  });
+  if(FIT_AUDIO&&music.src){
+    var done=false, fin=function(){ if(!done){done=true;go();} };
+    music.addEventListener('loadedmetadata',fin); music.addEventListener('error',fin); setTimeout(fin,3000);
+  } else { ready++; }
+  requestAnimationFrame(frame);
+
+  /* fit to the window for previews (stays 1:1 inside a 1920x1080 source) */
+  function fit(){
+    var s=Math.min(innerWidth/1920,innerHeight/1080), st=document.getElementById('stage');
+    st.style.transform = s<0.999||s>1.001 ? 'scale('+s+')' : '';
+    document.documentElement.style.width=document.body.style.width=(s<1?innerWidth:1920)+'px';
+    document.documentElement.style.height=document.body.style.height=(s<1?innerHeight:1080)+'px';
+  }
+  addEventListener('resize',fit); fit();
+})();
+</script>
+</body>
+</html>

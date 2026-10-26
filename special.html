@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>This EVE Life · Special</title>
+<meta name="viewport" content="width=1920,height=1080">
+<style>
+  /* OBS Browser Source: 1920 x 1080, placed at the BOTTOM of the scene.
+     Theme background only, no text. Put Display Capture, Window Capture or
+     Media sources above it. */
+  :root{--void:#03060e;--edge:#1c2c4d}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:1920px;height:1080px;overflow:hidden;background:var(--void)}
+  .stage{position:relative;width:1920px;height:1080px;transform-origin:0 0;
+    background:
+      radial-gradient(ellipse at 18% 0%,#12245a55 0%,transparent 55%),
+      radial-gradient(ellipse at 85% 10%,#3a0f4d4d 0%,transparent 50%),
+      radial-gradient(ellipse at 50% 110%,#02218a33 0%,transparent 60%),
+      linear-gradient(#2e8bff10 1px,transparent 1px),
+      linear-gradient(90deg,#2e8bff10 1px,transparent 1px),
+      var(--void);
+    background-size:auto,auto,auto,56px 56px,56px 56px,auto}
+  .corner{position:absolute;width:70px;height:70px;border:0 solid var(--edge)}
+  .corner.tl{top:36px;left:36px;border-top-width:2px;border-left-width:2px}
+  .corner.tr{top:36px;right:36px;border-top-width:2px;border-right-width:2px}
+  .corner.bl{bottom:36px;left:36px;border-bottom-width:2px;border-left-width:2px}
+  .corner.br{bottom:36px;right:36px;border-bottom-width:2px;border-right-width:2px}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+</div>
+<script>
+  function fit(){var s=Math.min(innerWidth/1920,innerHeight/1080),st=document.getElementById('stage');
+    st.style.transform=Math.abs(s-1)>.001?'scale('+s+')':'';}
+  addEventListener('resize',fit); fit();
+</script>
+</body>
+</html>

@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>This EVE Life · 4 Cam</title>
+<meta name="viewport" content="width=1920,height=1080">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800;900&family=Rajdhani:wght@600;700&family=Share+Tech+Mono&display=swap">
+<style>
+  /* OBS Browser Source: 1920 x 1080, transparent background.
+     Your looping EVE video sits BELOW this source, your cameras ABOVE it.
+
+     Name plates fill themselves from the stream schedule feed:
+       - Left plate  = host (default "Ceema" with "Space Journalist" below, change with ?host=...)
+       - Layout 2 x 2. Top-left = host; top-right, bottom-left, bottom-right = guests 1, 2, 3
+         of the show that's on now / starting within 90 min
+         (kept for 30 min after the end time, unless the next show starts within those 30 min).
+         Guests come from a line in the Discord event description (names only):
+           Guests: Name (Corp), Second Guest, Third Guest
+     Last-minute override (beats the schedule): ?g1=Name&g2=Name&g3=Name
+     Add ?auto=0 to turn it off and use your own Text sources on blank plates.
+     Add ?now=2026-10-10T20:30Z to test as if it were that time.
+     Add ?speak=demo to preview the speaking glow (neon blue on the frames; see "speaking glow" below), ?hostglow=0 to keep the host from lighting.
+     Episode name bar (top) and up-next ticker (bottom): ?title=Text, ?bar=0, ?speed=55, ?upnext=0, ?ticker=0 (see the block above the closing script tag).
+     Add ?guide=1 to show dashed camera outlines and sample plates while lining up (still see-through). */
+  :root{
+    --void:#03060e; --edge:#1c2c4d;
+    --blue:#2e8bff; --cyan:#35d6ff; --magenta:#f22dc8; --pink:#ff5cc8;
+    --text-hi:#fff; --text-mid:#c9d6ee; --text-dim:#8b98b8; --text-faint:#7a89ad;
+    --display:'Orbitron',system-ui,sans-serif;
+    --mono:'Share Tech Mono',ui-monospace,monospace;
+    --ch:22px; --bw:4px;
+  }
+  @property --a{syntax:'<angle>';initial-value:0deg;inherits:false}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:1920px;height:1080px;overflow:hidden;background:transparent}
+  .stage{position:relative;width:1920px;height:1080px;transform-origin:0 0}
+  .chamfer{clip-path:polygon(var(--ch) 0,100% 0,100% calc(100% - var(--ch)),calc(100% - var(--ch)) 100%,0 100%,0 var(--ch))}
+
+  /* brand */
+  .brand{position:absolute;top:36px;left:64px;display:flex;align-items:center}
+  .brand-in{display:flex;align-items:center;gap:16px;padding:12px 26px;background:#03060ecc;border:1px solid var(--edge);border-radius:999px}
+  .wordmark{font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:.14em;color:var(--text-hi)}
+  .wordmark span{color:var(--pink)}
+
+  /* camera frames 2 x 2: the camera fills the hole exactly (620 x 349, 16:9) */
+  .frame{position:absolute;width:628px;height:357px}
+  .c1,.c2{top:124px} .c3,.c4{top:597px}
+  .c1,.c3{left:308px} .c2,.c4{left:984px}
+  .frame::before{content:"";position:absolute;inset:0;border:1px solid #35d6ff40}
+  .frame::after{content:"";position:absolute;inset:0;padding:var(--bw);
+    background:conic-gradient(from var(--a),transparent 0deg 250deg,var(--cyan) 300deg,var(--pink) 345deg,transparent 360deg);
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+    mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);
+    filter:drop-shadow(0 0 8px #35d6ffaa) drop-shadow(0 0 16px #f22dc866);
+    animation:spin 6s linear infinite}
+  .frame.c2::after{animation-delay:-1.5s} .frame.c3::after{animation-delay:-3s} .frame.c4::after{animation-delay:-4.5s}
+  @keyframes spin{to{--a:360deg}}
+  .br{position:absolute;width:42px;height:42px;border:0 solid var(--cyan);filter:drop-shadow(0 0 6px var(--cyan))}
+  .br.tl{top:-12px;left:-12px;border-top-width:3px;border-left-width:3px}
+  .br.tr{top:-12px;right:-12px;border-top-width:3px;border-right-width:3px}
+  .br.bl{bottom:-12px;left:-12px;border-bottom-width:3px;border-left-width:3px}
+  .br.brr{bottom:-12px;right:-12px;border-bottom-width:3px;border-right-width:3px}
+  .cam-ph{display:none;position:absolute;inset:var(--bw);align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:28px;letter-spacing:.2em;color:#7a89ad;background:transparent;outline:2px dashed #35d6ff66;outline-offset:-14px}
+  .guide .cam-ph{display:flex}
+
+  /* name plates */
+  .plate{position:absolute;width:628px;height:72px;padding:0 32px;
+    background:linear-gradient(180deg,#101a32f2,#060b1af5);border:1px solid var(--edge);
+    display:flex;flex-direction:column;justify-content:center;gap:8px}
+  .plate.c1,.plate.c2{top:497px} .plate.c3,.plate.c4{top:970px}
+  .plate::before{content:"";position:absolute;left:0;top:18px;bottom:18px;width:5px}
+  .plate.c1::before{background:var(--pink);box-shadow:0 0 18px #f22dc8aa}
+  .plate.c2::before,.plate.c3::before,.plate.c4::before{background:var(--cyan);box-shadow:0 0 18px #35d6ffaa}
+  .name{font-family:var(--display);font-weight:800;font-size:42px;letter-spacing:.04em;color:var(--text-hi);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .title{font-family:var(--mono);font-size:22px;letter-spacing:.16em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sample{display:none;font-family:var(--display);font-weight:700;font-size:30px;color:var(--text-hi);white-space:nowrap;outline:2px dashed #ff5cc8aa;outline-offset:14px}
+  .guide .sample{display:block}
+  .pl{font-family:'Rajdhani',system-ui,sans-serif;font-weight:700;font-size:38px;color:var(--text-hi);white-space:nowrap;letter-spacing:.02em;max-width:564px;overflow:hidden;text-overflow:ellipsis}
+  .pl b{font-family:var(--display);font-weight:800;font-size:.86em;letter-spacing:.04em}
+  .pl b{display:block;line-height:1.1}
+  .pl .sub{margin-top:4px;font-family:var(--mono);font-size:26px;letter-spacing:.18em;text-transform:uppercase;color:var(--pink);line-height:1}
+  .has-auto .sample{display:none!important}
+
+  .foot{position:absolute;top:960px;left:0;right:0;display:flex;justify-content:center}
+  .foot-in{display:flex;gap:26px;align-items:center;padding:10px 26px;background:#03060ecc;border:1px solid var(--edge);border-radius:999px;
+    font-family:var(--mono);font-size:26px;letter-spacing:.14em;color:var(--text-dim);text-transform:uppercase}
+  .foot i{width:6px;height:6px;background:var(--pink);box-shadow:0 0 8px var(--pink);display:block}
+  @media(prefers-reduced-motion:reduce){.frame::after{animation:none}}
+
+  /* ---- speaking glow: neon blue tube around the frame and a lit plate ---- */
+  .frame .sg{position:absolute;inset:-2px;pointer-events:none;opacity:0;transition:opacity .16s ease-out;
+    border:4px solid #8fd0ff;
+    box-shadow:0 0 6px 1px #3aa0ff,0 0 22px 4px #1a7bff,0 0 56px 10px #0a5cffcc,
+               inset 0 0 6px 1px #3aa0ff,inset 0 0 30px 3px #1a7bffcc,inset 0 0 70px 6px #0a5cff77}
+  .frame.sp .sg{opacity:1;animation:sgp 1.3s ease-in-out infinite}
+  @keyframes sgp{50%{box-shadow:0 0 8px 2px #5ab4ff,0 0 30px 6px #1a7bff,0 0 74px 14px #0a5cffdd,
+               inset 0 0 8px 2px #5ab4ff,inset 0 0 40px 4px #1a7bffdd,inset 0 0 86px 8px #0a5cff88}}
+  .plate{transition:border-color .16s,box-shadow .16s}
+  .plate.sp{border-color:#5ab4ff;box-shadow:inset 0 0 34px #1a7bff77}
+  .plate.sp::before{background:#8fd0ff;box-shadow:0 0 6px #8fd0ff,0 0 20px 2px #1a7bff}
+  @media(prefers-reduced-motion:reduce){.frame.sp .sg{animation:none}}
+
+  /* ---- episode name bar (top, right of the logo) and up-next ticker (bottom edge) ---- */
+  .epbar{position:absolute;top:36px;left:520px;right:64px;height:74px;padding:0 34px 0 38px;display:none;align-items:center;gap:22px;
+    background:linear-gradient(180deg,#101a32f2,#060b1af5);border:1px solid var(--edge)}
+  .epbar.on,.guide .epbar{display:flex}
+  .epbar::before{content:"";position:absolute;left:0;top:18px;bottom:18px;width:5px;background:var(--pink);box-shadow:0 0 18px #f22dc8aa}
+  .eplabel{flex:none;font-family:var(--mono);font-size:26px;letter-spacing:.22em;color:var(--pink);text-transform:uppercase;white-space:nowrap}
+  .epname{flex:1;min-width:0;font-family:var(--display);font-weight:800;font-size:34px;letter-spacing:.04em;color:var(--text-hi);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  .ticker{position:absolute;left:0;right:0;top:1042px;height:38px;display:flex;background:#03060eeb;border-top:1px solid var(--edge);overflow:hidden}
+  .tk-label{flex:none;display:flex;align-items:center;padding:0 24px;font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:.24em;color:var(--text-hi);
+    background:#f22dc826;border-right:2px solid var(--pink);box-shadow:6px 0 14px #03060e}
+  .tk-win{position:relative;flex:1;min-width:0;overflow:hidden}
+  .tk-track{position:absolute;left:0;top:0;height:100%;display:flex;align-items:center;white-space:nowrap;will-change:transform}
+  .tk-set{display:flex;align-items:center;flex:none}
+  .tk-item{flex:none;display:flex;align-items:center;gap:12px;padding:0 30px;font-family:var(--mono);font-size:28px;letter-spacing:.06em;color:#c9d6ee}
+  .tk-dot{flex:none;width:6px;height:6px;background:var(--pink);box-shadow:0 0 8px var(--pink);display:block}
+  .tk-when{font-weight:400;color:var(--cyan);letter-spacing:.08em}
+  .tk-tag{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.16em;padding:0 10px;border:1px solid var(--blue);color:var(--cyan);background:#1470e920}
+  .tk-tag.yt{border-color:#ff3030;color:#ff8080;background:#ff30301c}
+  .tk-tag.sp{border-color:#1db954;color:#7be8a0;background:#1db95420}
+  .tk-tag.dc{border-color:#5865f2;color:#a9b0ff;background:#5865f21f}
+  @keyframes tkscroll{to{transform:translateX(calc(-1 * var(--w)))}}
+  @media(prefers-reduced-motion:reduce){.tk-track{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="brand"><div class="brand-in"><div class="wordmark">THIS <span>EVE</span> LIFE</div></div></div>
+
+  <div class="frame c1"><div class="cam-ph">CAMERA 1</div><i class="br tl"></i><i class="br tr"></i><i class="br bl"></i><i class="br brr"></i></div>
+  <div class="frame c2"><div class="cam-ph">CAMERA 2</div><i class="br tl"></i><i class="br tr"></i><i class="br bl"></i><i class="br brr"></i></div>
+  <div class="frame c3"><div class="cam-ph">CAMERA 3</div><i class="br tl"></i><i class="br tr"></i><i class="br bl"></i><i class="br brr"></i></div>
+  <div class="frame c4"><div class="cam-ph">CAMERA 4</div><i class="br tl"></i><i class="br tr"></i><i class="br bl"></i><i class="br brr"></i></div>
+
+  <div class="plate c1 chamfer"><div class="pl" id="p1"></div><div class="sample">Ceema<br><small style="font-size:20px;color:#ff5cc8">SPACE JOURNALIST</small></div></div>
+  <div class="plate c2 chamfer"><div class="pl" id="p2"></div><div class="sample">Debes Sparre</div></div>
+  <div class="plate c3 chamfer"><div class="pl" id="p3"></div><div class="sample">YoungPuke2</div></div>
+  <div class="plate c4 chamfer"><div class="pl" id="p4"></div><div class="sample">Third Guest</div></div>
+
+  <div class="epbar chamfer" id="epbar"><span class="eplabel" id="eplabel">Live Now</span><div class="epname" id="epname"></div></div>
+  <div class="ticker" id="ticker"><div class="tk-label" id="tkLabel">UP NEXT</div><div class="tk-win" id="tkWin"><div class="tk-track" id="tkTrack"></div></div></div>
+</div>
+<script>
+  var q; try{ q=new URLSearchParams(location.search); }catch(e){ q={get:function(){return null}}; }
+  // ?src=manual: TEL-Manual backup. Read manual.json next to this page instead of the VPS feed;
+  // no speaking glow, no avatars. Without it the page behaves exactly as before.
+  var MANUAL=q.get('src')==='manual';
+  var guide=q.get('guide')==='1';
+  if(guide) document.body.classList.add('guide');
+  function fit(){
+    var s=Math.min(innerWidth/1920,innerHeight/1080), st=document.getElementById('stage');
+    st.style.transform = Math.abs(s-1)>.001 ? 'scale('+s+')' : '';
+  }
+  addEventListener('resize',fit); fit();
+
+  /* ---------- auto name plates from the schedule feed ---------- */
+  var FEED_URL=MANUAL?'manual.json':'/api/public/feed', REFRESH_MS=2*60*1000, LEAD_MS=90*60*1000, MEMO_KEY='tel-last-show';
+  var SKIP_RE=/no\s*show|vacation|to\s*be\s*booked|\bTBB\b|cancel/i;  // placeholder events the overlays ignore
+  var HOST=q.get('host')||'Ceema - Space Journalist';   // name - title (title shows below the name)
+  var PLATES=['p2','p3','p4'];                 // guest plates in order
+  var auto=q.get('auto')!=='0';
+
+  /* ---------- show timing (same rule in every TEL overlay) ----------
+     A show is ON from its start to its end, then HOLDS for 30 minutes, then the next show takes over.
+     If the next show starts inside those 30 minutes, it takes over at the end instead.
+     Test clock: add ?now=2026-10-10T20:30Z to the URL to act as if it were that time (the clock keeps ticking). */
+  var HOLD_MS=30*60*1000;
+  var TEST_NOW=q.get('now')?Date.parse(q.get('now')):NaN, CLOCK_OFF=isNaN(TEST_NOW)?0:TEST_NOW-Date.now();
+  function nowMs(){return Date.now()+CLOCK_OFF;}
+  function pickShow(xs,now){             // xs sorted by start -> {x,state:'live'|'held'|'next'} or null
+    var live=xs.filter(function(x){return now>=x.at&&now<x.end;})[0];
+    if(live) return {x:live,state:'live'};
+    var nx=xs.filter(function(x){return x.at>now;})[0];
+    var held=xs.filter(function(x){return now>=x.end&&now<x.end+HOLD_MS;}).sort(function(a,b){return b.end-a.end;})[0];
+    if(held&&!(nx&&nx.at<held.end+HOLD_MS)) return {x:held,state:'held'};
+    return nx?{x:nx,state:'next'}:null;
+  }
+  if(!isNaN(TEST_NOW)){                  // visible reminder so a test clock never goes out on stream
+    var tb=document.createElement('div');
+    tb.style.cssText='position:fixed;top:12px;right:12px;z-index:99;padding:8px 14px;background:#ffb648;color:#1a1000;font:700 22px/1 Consolas,monospace;letter-spacing:.06em';
+    var tick=function(){tb.textContent='TEST CLOCK '+new Date(nowMs()).toISOString().slice(0,16).replace('T',' ')+' UTC';};
+    tick(); setInterval(tick,15000); document.body.appendChild(tb);
+  }
+
+  function splitGuests(str){               // "A - tag; B - tag" -> [{name,tag}]
+    return String(str||'').split(/[;\n]/).map(function(x){
+      x=x.trim(); if(!x) return null;
+      var m=/^(.+?)\s+[-–—]\s+(.+)$/.exec(x);
+      return m?{name:m[1].trim(),tag:m[2].trim()}:{name:x,tag:''};
+    }).filter(Boolean);
+  }
+  function namesOf(str){                  // "A; B" -> [{name:'A'},{name:'B'}]  (guests: name only)
+    return String(str||'').split(/[;\n]/).map(function(x){return x.trim();}).filter(Boolean)
+      .map(function(n){return {name:n,tag:''};});
+  }
+  function guestsOf(show){
+    if(Array.isArray(show.guests)) return show.guests.map(function(g){
+      return {name:typeof g==='string'?g.trim():String(g&&g.name||'').trim(),tag:''};
+    }).filter(function(g){return g.name;});
+    var m=/Guests?\s*:\s*([^\n]+)/i.exec(show.desc||'');   // fallback if the server passes the raw line
+    return m?namesOf(m[1].replace(/…$/,'')):[];
+  }
+  function currentShow(list){
+    var now=nowMs();
+    var xs=(list||[]).filter(function(s){return !SKIP_RE.test(s.name||'');}).map(function(s){var at=Date.parse(s.at);return {s:s,at:at,end:s.endAt?Date.parse(s.endAt):at+3*3600e3};})
+      .filter(function(x){return !isNaN(x.at);}).sort(function(a,b){return a.at-b.at;});
+    var p=pickShow(xs,now);
+    if(!p||(p.state==='next'&&p.x.at-now>LEAD_MS)) return null;   // plates fill in 90 min before a show
+    return p.x;
+  }
+  // backup: remember this show's guests in case the feed stops listing it early
+  function remember(cur){ if(!isNaN(TEST_NOW)) return;
+    try{ localStorage.setItem(MEMO_KEY,JSON.stringify({at:cur.at,end:cur.end,guests:guestsOf(cur.s)})); }catch(e){} }
+  function recalled(){
+    try{ var m=JSON.parse(localStorage.getItem(MEMO_KEY)||'null'); var now=nowMs();
+      return m&&now>=(m.at||m.end)-LEAD_MS&&now<m.end+HOLD_MS?m.guests:null; }catch(e){ return null; }
+  }
+  function setPlate(id,g){
+    var el=document.getElementById(id); el.textContent='';
+    if(!g||!g.name) return;
+    var b=document.createElement('b'); b.textContent=g.name; el.appendChild(b);
+    if(g.tag){var sp=document.createElement('div'); sp.className='sub'; sp.textContent=g.tag; el.appendChild(sp);}
+    var f=g.tag?32:38; el.style.fontSize=f+'px';
+    while(el.scrollWidth>564&&f>22){f-=1;el.style.fontSize=f+'px';}
+  }
+  function render(guests){
+    setPlate('p1',splitGuests(HOST)[0]);
+    PLATES.forEach(function(id,i){
+      var o=q.get('g'+(i+1));
+      setPlate(id,o?namesOf(o)[0]:guests[i]);
+    });
+  }
+  function load(){
+    fetch(FEED_URL,{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){
+      var cur=currentShow(d.nextShows);
+      if(cur){ remember(cur); render(guestsOf(cur.s)); } else render(recalled()||[]);
+    }).catch(function(){ render(recalled()||[]); });
+  }
+  if(auto){
+    document.body.classList.add('has-auto');
+    render([]); load(); setInterval(load,REFRESH_MS);
+    if(document.fonts&&document.fonts.ready) document.fonts.ready.then(load);
+  }
+
+  /* ---------- speaking glow ----------
+     The frame of a guest (and, by default, the host) who is talking lights up neon blue. The host is matched by name
+     against the ?host= name (default Ceema); ?hostglow=0 turns the host glow off. Who is talking comes from
+     /api/public/speaking (planned Discord bot), JSON like {"speaking":["Debes Sparre"]} (names)
+     or {"speaking":[1,2]} (guest numbers, 1 = first guest). Until that exists nothing lights up.
+     Test it by hand:  ?speak=1  ?speak=1,2  (stay lit)   ?speak=demo (cycles through host and guests)   ?speak=0 (the host)   ?speak=off (disable). */
+  (function(){
+    var CLS=['c2', 'c3', 'c4'], SPEAK_URL='/api/public/speaking', HANG_MS=700;
+    var mode=MANUAL?'off':(q.get('speak')||'').toLowerCase();
+    var HOSTCLS='c1', hostOn=q.get('hostglow')!=='0';
+    var hostName=String(HOST).split(/\s+[-–—]\s+/)[0];
+    var slots=CLS.map(function(c,i){
+      var fr=document.querySelector('.frame.'+c), pl=document.querySelector('.plate.'+c);
+      if(fr){var g=document.createElement('i'); g.className='sg'; fr.appendChild(g);}
+      return {fr:fr,pl:pl,id:PLATES[i],num:i+1,last:0};
+    });
+    if(hostOn){
+      var hf=document.querySelector('.frame.'+HOSTCLS), hp=document.querySelector('.plate.'+HOSTCLS);
+      if(hf){var hg=document.createElement('i'); hg.className='sg'; hf.appendChild(hg);}
+      slots.unshift({fr:hf,pl:hp,host:true,num:0,last:0});
+    }
+    function norm(s){return String(s||'').toLowerCase().replace(/\(.*?\)/g,'').replace(/[^a-z0-9]/g,'');}
+    function plateName(s){if(s.host) return norm(hostName); var b=document.getElementById(s.id); b=b&&b.querySelector('b'); return norm(b&&b.textContent);}
+    function same(a,b){return a.length>=3&&b.length>=3&&(a===b||a.indexOf(b)>-1||b.indexOf(a)>-1);}
+    function mark(list){
+      var t=Date.now();
+      slots.forEach(function(s){
+        var pn=plateName(s);
+        if(list.some(function(x){return typeof x==='number'?x===s.num:same(norm(x),pn);})) s.last=t;
+      });
+    }
+    function paint(){
+      var t=Date.now();
+      slots.forEach(function(s){
+        var on=t-s.last<HANG_MS;
+        if(s.fr) s.fr.classList.toggle('sp',on);
+        if(s.pl) s.pl.classList.toggle('sp',on);
+      });
+    }
+    setInterval(paint,100);
+    if(mode==='off') return;
+    if(mode==='demo'){
+      var t0=Date.now(); setInterval(function(){ mark([slots[Math.floor((Date.now()-t0)/1800)%slots.length].num]); },150); return;
+    }
+    if(mode){
+      var forced=mode.split(/[,;]/).map(Number).filter(function(x){return x>=0;});
+      setInterval(function(){mark(forced);},200); return;
+    }
+    var fails=0, wait=500;
+    (function poll(){
+      fetch(SPEAK_URL,{cache:'no-store'}).then(function(r){if(!r.ok) throw 0; return r.json();}).then(function(d){
+        fails=0; wait=500; mark(Array.isArray(d&&d.speaking)?d.speaking:[]);
+      }).catch(function(){ if(++fails>4) wait=5000; }).then(function(){ setTimeout(poll,wait); });
+    })();
+  })();
+
+  /* ---------- episode name bar (top) and up-next ticker (bottom) ----------
+     Bar    = name of the show that's on now / starting within 90 min (the Discord event name); with none, the next upcoming show.
+              Override: ?title=Text    Off: ?bar=0
+     Ticker = the next 5 shows after it (This EVE Life channel only; placeholders and other channels skipped), then the
+              YouTube, Spotify and Discord addresses, scrolling slowly. Times are EVE time (UTC), same as the Outro.
+              Speed: ?speed=55 (pixels per second)    Links only: ?upnext=0    Off: ?ticker=0
+     ?auto=0 turns off the schedule part (links only; the bar shows only ?title=). ?guide=1 shows a sample bar. */
+  (function(){
+    var bar=document.getElementById('epbar'), nameEl=document.getElementById('epname'), brand=document.querySelector('.brand'),
+        tk=document.getElementById('ticker'), track=document.getElementById('tkTrack'), win=document.getElementById('tkWin'), lab=document.getElementById('tkLabel');
+    var SCHED=MANUAL?['manual.json']:['/api/public/schedule','/api/public/feed'], REFRESH=2*60*1000;
+    var SPEED=Math.max(10,Math.min(300,parseFloat(q.get('speed'))||55));
+    var TITLE=q.get('title'), SHOW_BAR=q.get('bar')!=='0', SHOW_TK=q.get('ticker')!=='0', SHOW_NEXT=q.get('upnext')!=='0';
+    var LINKS=[['yt','YOUTUBE','youtube.com/@CeemaGPT'],['sp','SPOTIFY','spotify.thisevelife.space'],['dc','DISCORD','discord.thisevelife.space']];
+    var DOW=['SUN','MON','TUE','WED','THU','FRI','SAT'];
+    var sig=null;
+    if(!SHOW_TK) tk.style.display='none';
+
+    function p2(n){return n<10?'0'+n:''+n;}
+    function whenOf(ms){var d=new Date(ms); return DOW[d.getUTCDay()]+' '+(d.getUTCMonth()+1)+'/'+d.getUTCDate()+' · '+p2(d.getUTCHours())+':'+p2(d.getUTCMinutes())+' EVE';}
+    function el(t,c,x){var e=document.createElement(t); if(c) e.className=c; if(x!=null) e.textContent=x; return e;}
+
+    /* episode bar */
+    function placeBar(){ if(brand) bar.style.left=(brand.offsetLeft+brand.offsetWidth+24)+'px'; }
+    function fitName(){ var f=34; nameEl.style.fontSize=f+'px';
+      while(nameEl.scrollWidth>nameEl.clientWidth+1&&f>20){f-=1;nameEl.style.fontSize=f+'px';} }
+    function setBar(txt,lbl){
+      document.getElementById('eplabel').textContent=lbl||'Live Now';
+      if(!txt&&guide) txt='Episode Name Goes Here';
+      if(!SHOW_BAR||!txt){ bar.classList.remove('on'); return; }
+      nameEl.textContent=txt; bar.classList.add('on'); placeBar(); fitName();
+    }
+
+    /* ticker */
+    function mkSet(eps){
+      var set=el('div','tk-set');
+      eps.forEach(function(e){
+        var it=el('span','tk-item'); it.appendChild(el('b','tk-when',whenOf(e.at))); it.appendChild(document.createTextNode(e.name));
+        set.appendChild(it); set.appendChild(el('i','tk-dot'));
+      });
+      LINKS.forEach(function(l){
+        var it=el('span','tk-item'); it.appendChild(el('b','tk-tag '+l[0],l[1])); it.appendChild(document.createTextNode(l[2]));
+        set.appendChild(it); set.appendChild(el('i','tk-dot'));
+      });
+      return set;
+    }
+    function buildTicker(eps){
+      var key=JSON.stringify(eps.map(function(e){return [e.at,e.name];}));
+      if(key===sig) return; sig=key;                       // same list: leave the scroll running
+      lab.textContent=eps.length?'UP NEXT':'FIND US';
+      track.style.animation='none'; track.textContent='';
+      var first=mkSet(eps); track.appendChild(first);
+      var w=first.offsetWidth+1; first.style.width=w+'px';
+      var n=Math.ceil(win.clientWidth/w)+1;                // enough copies to fill the window while one copy slides out
+      for(var i=1;i<n;i++){ var c=mkSet(eps); c.style.width=w+'px'; track.appendChild(c); }
+      track.style.setProperty('--w',w+'px');
+      void track.offsetWidth;
+      track.style.animation='tkscroll '+(w/SPEED).toFixed(2)+'s linear infinite';
+    }
+
+    function apply(list){
+      var now=nowMs(), cur=list?currentShow(list):null, eps=[], shown=cur;
+      if(!shown&&list){   // nothing on now or within 90 min: show the next real show's name instead of an empty bar
+        shown=list.filter(function(s){return !SKIP_RE.test(s.name||'')&&s.ownChannel!==false;})
+          .map(function(s){return {s:s,at:Date.parse(s.at)};}).filter(function(x){return !isNaN(x.at)&&x.at>now;})
+          .sort(function(a,b){return a.at-b.at;})[0]||null;
+      }
+      setBar(TITLE||(shown?shown.s.name:''), (!TITLE&&!cur)?'Next Show':'Live Now');
+      if(list&&SHOW_NEXT){
+        eps=list.filter(function(s){return !SKIP_RE.test(s.name||'')&&s.ownChannel!==false;})
+          .map(function(s){return {at:Date.parse(s.at),name:String(s.name||'').trim()};})
+          .filter(function(e){return e.name&&!isNaN(e.at)&&e.at>now&&!(shown&&e.at===shown.at);})
+          .sort(function(a,b){return a.at-b.at;}).slice(0,5);
+      }
+      buildTicker(eps);
+    }
+    function get(cb){
+      var i=0;
+      (function nx(){
+        if(i>=SCHED.length){cb(null);return;}
+        fetch(SCHED[i++],{cache:'no-store'}).then(function(r){if(!r.ok) throw 0; return r.json();})
+          .then(function(d){cb(d.shows||d.nextShows||[]);}).catch(nx);
+      })();
+    }
+    function go(){
+      if(!auto){ setBar(TITLE||''); buildTicker([]); return; }
+      get(function(list){
+        if(list) apply(list);
+        else{ if(TITLE) setBar(TITLE); if(sig===null) buildTicker([]); }   // feed down: keep what is showing; first load shows the links
+      });
+    }
+    go(); setInterval(go,REFRESH);
+    if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ sig=null; go(); });   // re-measure once the fonts are in
+  })();
+</script>
+</body>
+</html>

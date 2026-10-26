@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>This EVE Life · Office Hours</title>
+<meta name="viewport" content="width=1920,height=1080">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800;900&family=Rajdhani:wght@600;700&family=Share+Tech+Mono&display=swap">
+<style>
+  /* OBS Browser Source: 1920 x 1080, fully transparent except the lower-right column.
+     EVE game capture goes BELOW this source, your camera BELOW it too (the frame covers its edges).
+
+     Two scenes, two files (same design):
+       gameplay.html      Solo gameplay: your camera + your plate, lower right.
+       officehours.html   Office Hours: adds an "Office Guest" plate above your camera,
+                          left empty for an OBS Text source (or fill it with ?g1=Name).
+     ?host=Name - Title  changes your plate (default Ceema · Space Journalist).
+     ?guide=1            shows a camera outline and a sample guest while lining up.
+     The column sits above the Now Playing bar (pc/tel-nowplaying.html, y 893 to 945): moved up 168 px
+     on 2026-10-14. Your camera: x 1396, y 486, 480 x 270. */
+  :root{
+    --void:#03060e; --edge:#1c2c4d;
+    --blue:#2e8bff; --cyan:#35d6ff; --magenta:#f22dc8; --pink:#ff5cc8;
+    --text-hi:#fff; --text-mid:#c9d6ee; --text-dim:#8b98b8; --text-faint:#7a89ad;
+    --display:'Orbitron',system-ui,sans-serif;
+    --mono:'Share Tech Mono',ui-monospace,monospace;
+    --ch:22px; --bw:4px;
+    --colL:1392px; --colW:488px;
+  }
+  @property --a{syntax:'<angle>';initial-value:0deg;inherits:false}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:1920px;height:1080px;overflow:hidden;background:transparent}
+  .stage{position:relative;width:1920px;height:1080px;transform-origin:0 0}
+  .chamfer{clip-path:polygon(var(--ch) 0,100% 0,100% calc(100% - var(--ch)),calc(100% - var(--ch)) 100%,0 100%,0 var(--ch))}
+
+  /* brand, right-aligned above the column */
+  .brand{position:absolute;right:40px;top:402px;display:flex;align-items:center}
+  .office .brand{top:276px}
+  .brand-in{display:flex;align-items:center;gap:14px;padding:10px 22px 10px 12px;background:#03060ecc;border:1px solid var(--edge);border-radius:999px}
+  .wordmark{font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:.14em;color:var(--text-hi)}
+  .wordmark span{color:var(--pink)}
+
+  /* your camera: the camera fills the hole exactly (480 x 270, 16:9) */
+  .frame{position:absolute;left:var(--colL);top:482px;width:var(--colW);height:278px}
+  .frame::before{content:"";position:absolute;inset:0;border:1px solid #35d6ff40}
+  .frame::after{content:"";position:absolute;inset:0;padding:var(--bw);
+    background:conic-gradient(from var(--a),transparent 0deg 250deg,var(--cyan) 300deg,var(--pink) 345deg,transparent 360deg);
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+    mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);
+    filter:drop-shadow(0 0 8px #35d6ffaa) drop-shadow(0 0 16px #f22dc866);
+    animation:spin 6s linear infinite}
+  @keyframes spin{to{--a:360deg}}
+  .br{position:absolute;width:36px;height:36px;border:0 solid var(--cyan);filter:drop-shadow(0 0 6px var(--cyan))}
+  .br.tl{top:-10px;left:-10px;border-top-width:3px;border-left-width:3px}
+  .br.tr{top:-10px;right:-10px;border-top-width:3px;border-right-width:3px}
+  .br.bl{bottom:-10px;left:-10px;border-bottom-width:3px;border-left-width:3px}
+  .br.brr{bottom:-10px;right:-10px;border-bottom-width:3px;border-right-width:3px}
+  .cam-ph{display:none;position:absolute;inset:var(--bw);align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:24px;letter-spacing:.2em;color:#7a89ad;outline:2px dashed #35d6ff66;outline-offset:-12px}
+  .guide .cam-ph{display:flex}
+
+  /* plates */
+  .plate{position:absolute;left:var(--colL);width:var(--colW);height:100px;padding:0 34px;
+    background:linear-gradient(180deg,#101a32f2,#060b1af5);border:1px solid var(--edge);
+    display:flex;flex-direction:column;justify-content:center;gap:6px}
+  .plate::before{content:"";position:absolute;left:0;top:24px;bottom:24px;width:5px}
+  .plate.host{top:772px}
+  .plate.host::before{background:var(--pink);box-shadow:0 0 18px #f22dc8aa}
+  .plate.guest{top:356px;display:none}
+  .office .plate.guest{display:flex}
+  .plate.guest::before{background:var(--cyan);box-shadow:0 0 18px #35d6ffaa}
+  .glabel{font-family:var(--mono);font-size:26px;letter-spacing:.24em;text-transform:uppercase;color:var(--cyan);line-height:1}
+  .gname{height:42px;display:flex;align-items:center}
+  .pl{font-family:'Rajdhani',system-ui,sans-serif;font-weight:700;font-size:38px;color:var(--text-hi);white-space:nowrap;letter-spacing:.02em;max-width:420px;overflow:hidden;text-overflow:ellipsis}
+  .pl b{font-family:var(--display);font-weight:800;font-size:.86em;letter-spacing:.04em;display:block;line-height:1.1}
+  .pl .sub{margin-top:5px;font-family:var(--mono);font-size:26px;letter-spacing:.18em;text-transform:uppercase;color:var(--pink);line-height:1}
+  .sample{display:none;font-family:var(--display);font-weight:800;font-size:31px;color:var(--text-hi);white-space:nowrap;outline:2px dashed #ff5cc8aa;outline-offset:6px}
+  .guide .sample{display:block}
+  .has-g1 .sample{display:none!important}
+  @media(prefers-reduced-motion:reduce){.frame::after{animation:none}}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="brand"><div class="brand-in"><div class="wordmark">THIS <span>EVE</span> LIFE</div></div></div>
+
+  <div class="plate guest chamfer"><div class="glabel">Office Guest</div><div class="gname"><div class="pl" id="p2"></div><div class="sample">Guest Name</div></div></div>
+
+  <div class="frame"><div class="cam-ph">YOUR CAMERA</div><i class="br tl"></i><i class="br tr"></i><i class="br bl"></i><i class="br brr"></i></div>
+
+  <div class="plate host chamfer"><div class="pl" id="p1"></div></div>
+</div>
+<script>
+  var q; try{ q=new URLSearchParams(location.search); }catch(e){ q={get:function(){return null}}; }
+  if(q.get('guide')==='1') document.body.classList.add('guide');
+  document.body.classList.add('office');   // Office Hours: guest plate on
+  function fit(){
+    var s=Math.min(innerWidth/1920,innerHeight/1080), st=document.getElementById('stage');
+    st.style.transform = Math.abs(s-1)>.001 ? 'scale('+s+')' : '';
+  }
+  addEventListener('resize',fit); fit();
+
+  var HOST=q.get('host')||'Ceema - Space Journalist';   // name - title (title shows below the name)
+  function setPlate(id,name,tag,max){
+    var el=document.getElementById(id); el.textContent='';
+    if(!name) return;
+    var b=document.createElement('b'); b.textContent=name; el.appendChild(b);
+    if(tag){var sp=document.createElement('div'); sp.className='sub'; sp.textContent=tag; el.appendChild(sp);}
+    var f=tag?34:38; el.style.fontSize=f+'px';
+    while(el.scrollWidth>max&&f>22){f-=1;el.style.fontSize=f+'px';}
+  }
+  var m=/^(.+?)\s+[-–—]\s+(.+)$/.exec(HOST.trim());
+  setPlate('p1',m?m[1]:HOST,m?m[2]:'',420);
+  var g1=q.get('g1');
+  if(g1){document.body.classList.add('has-g1'); setPlate('p2',g1.trim(),'',420);}
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){
+    setPlate('p1',m?m[1]:HOST,m?m[2]:'',420); if(g1) setPlate('p2',g1.trim(),'',420);
+  });
+</script>
+</body>
+</html>

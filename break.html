@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>This EVE Life · Break</title>
+<meta name="viewport" content="width=1920,height=1080">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap">
+<style>
+  /* OBS Browser Source: 1920 x 1080.
+     The TODAY box fills itself from the Discord calendar feed (override: ?today=Your Title,
+     turn off with ?auto=0 and use a Text source instead).
+     Add ?guide=1 to the URL to show sample content in the two boxes
+     while you line up the Timer and Text sources; remove it for the live scene. */
+  :root{
+    --void:#03060e; --panel:#09142c; --edge:#1c2c4d;
+    --blue:#2e8bff; --cyan:#35d6ff; --magenta:#f22dc8; --pink:#ff5cc8;
+    --text-hi:#fff; --text-mid:#c9d6ee; --text-dim:#8b98b8; --text-faint:#7a89ad;
+    --display:'Orbitron',system-ui,sans-serif;
+    --body:'Rajdhani',system-ui,sans-serif;
+    --mono:'Share Tech Mono',ui-monospace,monospace;
+    --glow-pink:0 0 30px #f22dc866,0 0 6px #ff5cc8cc;
+    --glow-cyan:0 0 24px #35d6ff55;
+    --ch:22px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:1920px;height:1080px;overflow:hidden;background:var(--void)}
+  body{color:var(--text-mid);font-family:var(--body)}
+
+  .stage{position:relative;width:1920px;height:1080px;transform-origin:0 0;
+    background:
+      radial-gradient(ellipse at 18% 0%,#12245a55 0%,transparent 55%),
+      radial-gradient(ellipse at 85% 10%,#3a0f4d4d 0%,transparent 50%),
+      radial-gradient(ellipse at 50% 110%,#02218a33 0%,transparent 60%),
+      linear-gradient(#2e8bff10 1px,transparent 1px),
+      linear-gradient(90deg,#2e8bff10 1px,transparent 1px),
+      var(--void);
+    background-size:auto,auto,auto,56px 56px,56px 56px,auto;
+  }
+  .chamfer{clip-path:polygon(var(--ch) 0,100% 0,100% calc(100% - var(--ch)),calc(100% - var(--ch)) 100%,0 100%,0 var(--ch))}
+  .center{position:absolute;left:0;right:0;display:flex;justify-content:center;align-items:center}
+
+  .corner{position:absolute;width:70px;height:70px;border-color:var(--edge);border-style:solid;border-width:0}
+  .corner.tl{top:36px;left:36px;border-top-width:2px;border-left-width:2px}
+  .corner.tr{top:36px;right:36px;border-top-width:2px;border-right-width:2px}
+  .corner.bl{bottom:36px;left:36px;border-bottom-width:2px;border-left-width:2px}
+  .corner.br{bottom:36px;right:36px;border-bottom-width:2px;border-right-width:2px}
+
+  .brand{top:110px;gap:18px}
+  .wordmark{font-family:var(--display);font-weight:800;font-size:34px;letter-spacing:.14em;color:var(--text-hi)}
+  .wordmark span{color:var(--pink)}
+
+  .status{top:236px;gap:14px;font-family:var(--mono);font-size:26px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-dim)}
+  .status .dot{width:14px;height:14px;border-radius:50%;background:var(--cyan);box-shadow:0 0 12px var(--cyan);animation:pulse 1.6s ease-in-out infinite}
+  @keyframes pulse{50%{opacity:.3}}
+
+  h1{position:absolute;top:268px;left:0;right:0;text-align:center;white-space:nowrap;
+    font-family:var(--display);font-weight:900;font-size:120px;line-height:1.3;letter-spacing:.06em;
+    background:linear-gradient(180deg,#fff 0%,#dfe7f2 45%,#a9b6cf 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .tagline{top:460px;font-size:30px;font-weight:500;color:var(--text-dim)}
+  .rule{position:absolute;top:470px;left:760px;width:400px;height:2px;
+    background:linear-gradient(90deg,transparent,var(--pink),var(--magenta),transparent);box-shadow:var(--glow-pink)}
+
+  /* two slots: Timer source on the left, auto-filled Today title on the right */
+  .label{position:absolute;top:586px;font-family:var(--display);font-weight:700;font-size:26px;
+    letter-spacing:.3em;text-transform:uppercase;color:var(--cyan);display:flex;align-items:center;gap:12px}
+  .label::before{content:"";width:9px;height:9px;background:currentColor;box-shadow:0 0 10px currentColor}
+  .label.pink{color:var(--pink)}
+  .slot{position:absolute;top:630px;height:240px;background:linear-gradient(180deg,#101a32eb,#060b1af0);border:1px solid var(--edge)}
+  .slot::after{content:"";position:absolute;left:0;top:34px;bottom:34px;width:4px}
+  .slot.cd{left:180px;width:520px}
+  .slot.cd::after{background:var(--cyan);box-shadow:var(--glow-cyan)}
+  .slot.today{left:760px;width:980px}
+  .slot.today::after{background:var(--pink);box-shadow:var(--glow-pink)}
+
+  .sample{display:none;position:absolute;inset:0;align-items:center;outline:2px dashed #ff5cc8aa;outline-offset:-12px}
+  .guide .sample{display:flex}
+  .cd .sample{justify-content:center;font-family:var(--mono);font-size:110px;color:var(--text-hi);text-shadow:var(--glow-cyan)}
+  .auto-today{position:absolute;inset:0 56px;display:flex;align-items:center;font-family:var(--display);font-weight:700;font-size:44px;line-height:1.3;color:var(--text-hi);overflow:hidden;text-wrap:balance}
+  .has-auto .today .sample{display:none!important}
+  .today .sample{padding:0 56px;font-family:var(--display);font-weight:700;font-size:40px;line-height:1.35;color:var(--text-hi)}
+
+  .foot{top:990px;gap:28px;font-family:var(--mono);font-size:26px;letter-spacing:.14em;color:var(--text-dim);text-transform:uppercase}
+  .foot i{width:6px;height:6px;background:var(--pink);box-shadow:0 0 8px var(--pink);display:block}
+  @media(prefers-reduced-motion:reduce){.status .dot{animation:none}}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+
+  <div class="center brand">
+    
+    <div class="wordmark">THIS <span>EVE</span> LIFE</div>
+  </div>
+
+  <h1><span id="h1t">BE RIGHT BACK</span></h1>
+  <div class="rule"></div>
+
+  <div class="label" style="left:180px">Countdown</div>
+  <div class="slot cd chamfer"><div class="sample">9:59</div></div>
+
+  <div class="label pink" style="left:760px">Today</div>
+  <div class="slot today chamfer"><div class="auto-today" id="today"></div><div class="sample">Faction Warfare Blues: EVE Online FW Discussion (EP 27)</div></div>
+
+</div>
+<script>
+  try{ if(/[?&]guide=1/.test(location.search)) document.body.classList.add('guide'); }catch(e){}
+  /* ---------- schedule feed (Discord calendar via /api/public/feed) ---------- */
+  var q; try{ q=new URLSearchParams(location.search); }catch(e){ q={get:function(){return null}}; }
+  // ?src=manual: TEL-Manual backup. Read manual.json next to this page instead of the VPS feed;
+  // no speaking glow, no avatars. Without it the page behaves exactly as before.
+  var MANUAL=q.get('src')==='manual';
+  // full calendar first (so placeholders never crowd real shows out), the 4-show feed as backup
+  var FEED_URLS=MANUAL?['manual.json']:['/api/public/schedule','/api/public/feed'], REFRESH_MS=2*60*1000;
+  var SKIP_RE=/no\s*show|vacation|to\s*be\s*booked|\bTBB\b|cancel/i;  // placeholder events the overlays ignore
+  var auto=q.get('auto')!=='0';
+
+  /* ---------- show timing (same rule in every TEL overlay) ----------
+     A show is ON from its start to its end, then HOLDS for 30 minutes, then the next show takes over.
+     If the next show starts inside those 30 minutes, it takes over at the end instead.
+     Test clock: add ?now=2026-10-10T20:30Z to the URL to act as if it were that time (the clock keeps ticking). */
+  var HOLD_MS=30*60*1000;
+  var TEST_NOW=q.get('now')?Date.parse(q.get('now')):NaN, CLOCK_OFF=isNaN(TEST_NOW)?0:TEST_NOW-Date.now();
+  function nowMs(){return Date.now()+CLOCK_OFF;}
+  function pickShow(xs,now){             // xs sorted by start -> {x,state:'live'|'held'|'next'} or null
+    var live=xs.filter(function(x){return now>=x.at&&now<x.end;})[0];
+    if(live) return {x:live,state:'live'};
+    var nx=xs.filter(function(x){return x.at>now;})[0];
+    var held=xs.filter(function(x){return now>=x.end&&now<x.end+HOLD_MS;}).sort(function(a,b){return b.end-a.end;})[0];
+    if(held&&!(nx&&nx.at<held.end+HOLD_MS)) return {x:held,state:'held'};
+    return nx?{x:nx,state:'next'}:null;
+  }
+  if(!isNaN(TEST_NOW)){                  // visible reminder so a test clock never goes out on stream
+    var tb=document.createElement('div');
+    tb.style.cssText='position:fixed;top:12px;right:12px;z-index:99;padding:8px 14px;background:#ffb648;color:#1a1000;font:700 22px/1 Consolas,monospace;letter-spacing:.06em';
+    var tick=function(){tb.textContent='TEST CLOCK '+new Date(nowMs()).toISOString().slice(0,16).replace('T',' ')+' UTC';};
+    tick(); setInterval(tick,15000); document.body.appendChild(tb);
+  }
+  var DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  function pad(n){return n<10?'0'+n:''+n;}
+  function shows(d){
+    return (d&&(d.shows||d.nextShows)||[]).filter(function(s){return !SKIP_RE.test(s.name||'');}).map(function(s){var at=Date.parse(s.at);return {s:s,at:at,end:s.endAt?Date.parse(s.endAt):at+3*3600e3};})
+      .filter(function(x){return !isNaN(x.at);}).sort(function(a,b){return a.at-b.at;});
+  }
+  function eveWhen(ms){var d=new Date(ms);
+    return DAYS[d.getUTCDay()]+' '+(d.getUTCMonth()+1)+'/'+d.getUTCDate()+' · '+pad(d.getUTCHours())+':'+pad(d.getUTCMinutes())+' EVE';}
+  function fitBox(el,max,min,w,h){var f=max;el.style.fontSize=f+'px';
+    while((el.scrollHeight>el.clientHeight+1||el.scrollWidth>el.clientWidth+1)&&f>min){f-=1;el.style.fontSize=f+'px';}}
+  function loadFeed(cb){
+    var i=0;
+    (function next(){
+      if(i>=FEED_URLS.length){cb(null);return;}
+      fetch(FEED_URLS[i++],{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.json();})
+        .then(function(d){cb(shows(d));}).catch(next);
+    })();
+  }
+
+  // Today = the show on air (held 30 min after its end) or the next one. Override: ?today=Title
+  var todayEl=document.getElementById('today');
+  function renderToday(list){
+    var o=q.get('today'), now=nowMs(), t='';
+    if(o) t=o;
+    else if(list){var cur=pickShow(list,now); t=cur?cur.x.s.name:'';}   // on air, held 30 min after, or next
+    else return;                       // feed unreachable: keep what's showing
+    todayEl.textContent=t; fitBox(todayEl,44,22,868,200);
+  }
+  if(auto){ document.body.classList.add('has-auto');
+    renderToday(null); if(q.get('today')) renderToday([]);
+    var go=function(){loadFeed(renderToday);}; go(); setInterval(go,REFRESH_MS);
+    if(document.fonts&&document.fonts.ready) document.fonts.ready.then(go);
+  }
+
+  function fit(){
+    var s=Math.min(innerWidth/1920,innerHeight/1080);
+    var st=document.getElementById('stage');
+    st.style.transform = s<0.999||s>1.001 ? 'scale('+s+')' : '';
+    document.documentElement.style.width=document.body.style.width=(s<1?innerWidth:1920)+'px';
+    document.documentElement.style.height=document.body.style.height=(s<1?innerHeight:1080)+'px';
+  }
+  addEventListener('resize',fit); fit();
+  function fitTitle(){var h=document.querySelector('h1'),t=document.getElementById('h1t');if(!h||!t)return;h.style.fontSize='';
+    var f=parseFloat(getComputedStyle(h).fontSize);
+    while(t.getBoundingClientRect().width>1760&&f>40){f-=2;h.style.fontSize=f+'px';}}
+  fitTitle(); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(fitTitle);
+</script>
+</body>
+</html>

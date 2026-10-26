@@ -1,0 +1,16 @@
+{
+  "updated": "2026-10-26T23:00:00Z",
+  "nextShows": [
+    {
+      "name": "This EVE Life - TEL-Manual test show",
+      "at": "2026-11-02T20:00:00Z",
+      "endAt": "2026-11-02T22:00:00Z",
+      "guests": ["Guest One", "Guest Two"]
+    },
+    {
+      "name": "This EVE Life - next show goes here",
+      "at": "2026-11-05T20:00:00Z",
+      "guests": []
+    }
+  ]
+}

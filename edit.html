@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>TEL-Manual Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap">
+<style>
+  /* Same tokens as thisevelife.space and the overlays (Overlay Kit › Match the website). */
+  :root{color-scheme:dark;--void:#03060e;--panel:#09142c;--panel2:#0e1830;--edge:#1c2c4d;--blue:#2e8bff;--cyan:#35d6ff;--pink:#ff5cc8;
+    --hi:#fff;--mid:#c9d6ee;--dim:#8b98b8;--ok:#5ee38a;--warn:#ffb648;
+    --display:'Orbitron',system-ui,sans-serif;--body:'Rajdhani','Segoe UI',system-ui,sans-serif;--mono:'Share Tech Mono',ui-monospace,Consolas,monospace}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--void)}
+  body{color:var(--mid);font:500 18px/1.5 var(--body);padding:24px 16px 64px;
+    background-image:linear-gradient(#2e8bff0c 1px,transparent 1px),linear-gradient(90deg,#2e8bff0c 1px,transparent 1px);background-size:44px 44px}
+  .wrap{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+  h1{font:800 clamp(22px,4vw,30px)/1.2 var(--display);color:var(--hi);margin:0;letter-spacing:.03em} h1 span{color:var(--pink)}
+  h2{font:700 15px/1 var(--display);color:var(--cyan);letter-spacing:.12em;text-transform:uppercase;margin:0 0 14px;display:flex;align-items:center;gap:10px}
+  h2::before{content:"";width:8px;height:8px;background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
+  p{margin:0;max-width:68ch} .note{color:var(--dim);font-size:16px}
+  a{color:var(--cyan)} a:hover{color:var(--pink)}
+  .panel{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--edge);padding:18px 20px}
+  label{display:flex;flex-direction:column;gap:6px;font-weight:600;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+  input,textarea,select{font:600 18px var(--body);color:var(--hi);background:var(--void);border:1px solid var(--edge);padding:10px 12px;min-height:44px;width:100%}
+  textarea{min-height:120px;resize:vertical;font-family:var(--mono);font-size:16px;font-weight:400}
+  input:focus,textarea:focus,select:focus,button:focus-visible,a:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px} .row3{display:grid;grid-template-columns:2fr 1fr 1fr;gap:14px}
+  @media(max-width:620px){.row,.row3{grid-template-columns:1fr}}
+  .stack{display:flex;flex-direction:column;gap:14px}
+  .show{border-top:1px solid var(--edge);padding-top:14px;margin-top:4px}
+  .show:first-of-type{border-top:0;padding-top:0;margin-top:0}
+  .actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+  button{font:700 15px var(--body);letter-spacing:.08em;text-transform:uppercase;cursor:pointer;min-height:44px;padding:0 16px;
+    background:#1470e929;border:1px solid var(--blue);color:#e3f0ff}
+  button.primary{background:var(--blue);color:#03060e;border-color:var(--blue)} button:hover{filter:brightness(1.15)}
+  button.quiet{background:transparent;border-color:var(--edge);color:var(--mid)}
+  pre{margin:0;white-space:pre-wrap;word-break:break-all;background:var(--void);border:1px solid var(--edge);padding:12px 14px;font:400 14px/1.5 var(--mono);color:var(--hi);max-height:320px;overflow:auto}
+  #status{font-family:var(--mono);font-size:15px;color:var(--dim);min-height:1.5em} #status.ok{color:var(--ok)} #status.warn{color:var(--warn)}
+  ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:6px}
+  kbd{font-family:var(--mono);font-size:.9em;color:var(--hi)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="stack">
+    <h1>THIS <span>EVE</span> LIFE · TEL-Manual Editor</h1>
+    <p class="note">Fills <kbd>manual.json</kbd> for the TEL-Manual backup overlays. Nothing here touches the VPS or the automatic set. Fill in the shows, press <b>Build JSON</b>, copy it, and paste it over <kbd>manual.json</kbd> on GitHub. The overlays pick it up within about 5 minutes (GitHub Pages cache); right-click → Refresh in OBS to hurry it.</p>
+  </header>
+
+  <section class="panel">
+    <h2>Time zone</h2>
+    <label>Times below are in
+      <select id="tz"><option value="utc">EVE time (UTC)</option><option value="pt">Pacific (your clock)</option></select>
+    </label>
+  </section>
+
+  <section class="panel stack" id="shows">
+    <h2>Shows</h2>
+    <p class="note">Show 1 is today's show (or the next one). The rest feed the Outro's Next Episode box and the Up Next ticker. Leave a show blank to skip it. Guests: one per line, in plate order (first guest = 2Cam plate, 3Cam middle, 4Cam top-right).</p>
+    <div id="list"></div>
+    <div class="actions"><button type="button" class="quiet" id="add">+ Add a show</button></div>
+  </section>
+
+  <section class="panel stack">
+    <h2>Result</h2>
+    <div class="actions">
+      <button type="button" class="primary" id="build">Build JSON</button>
+      <button type="button" id="copy">Copy JSON</button>
+      <button type="button" class="quiet" id="load">Load the published manual.json</button>
+      <a href="https://github.com/ceemaeve/tel-manual/edit/main/manual.json" target="_blank" rel="noopener">Open manual.json on GitHub ↗</a>
+    </div>
+    <div id="status" aria-live="polite"></div>
+    <pre id="out">{ }</pre>
+  </section>
+
+  <section class="panel">
+    <h2>Then, on GitHub</h2>
+    <ol>
+      <li>Open <kbd>manual.json</kbd> with the link above (sign in to GitHub).</li>
+      <li>Select everything in the editor, paste the JSON, press <b>Commit changes</b>.</li>
+      <li>In OBS, switch to the <b>TEL-Manual</b> scene collection. Refresh a Browser Source if a plate is still blank after 5 minutes.</li>
+    </ol>
+  </section>
+</div>
+<script>
+(function(){
+  var list=document.getElementById('list'), out=document.getElementById('out'), status=document.getElementById('status'), tz=document.getElementById('tz');
+  var KEY='tel-manual-draft';
+  function say(t,cls){status.textContent=t;status.className=cls||'';}
+  function row(n,v){ v=v||{};
+    var d=document.createElement('div'); d.className='show stack'; d.innerHTML=
+      '<div class="row3">'+
+      '<label>Show '+n+' · title<input data-k="name" placeholder="EP 36 - Guest Name of Alliance"></label>'+
+      '<label>Date<input data-k="date" type="date"></label>'+
+      '<label>Start<input data-k="start" type="time" step="300"></label></div>'+
+      '<div class="row"><label>End (blank = 3 hours)<input data-k="end" type="time" step="300"></label>'+
+      '<label>Guests, one per line<textarea data-k="guests" rows="3"></textarea></label></div>';
+    list.appendChild(d);
+    ['name','date','start','end','guests'].forEach(function(k){var el=d.querySelector('[data-k="'+k+'"]'); if(v[k]) el.value=v[k];});
+    return d;
+  }
+  function rows(){return Array.prototype.slice.call(list.querySelectorAll('.show'));}
+  function read(d){var o={};d.querySelectorAll('[data-k]').forEach(function(el){o[el.dataset.k]=el.value;});return o;}
+  function toIso(date,time){ if(!date||!time) return null;
+    var s=date+'T'+time+':00'; var ms=tz.value==='utc'?Date.parse(s+'Z'):new Date(s).getTime();  // 'pt' uses this browser's clock
+    return isNaN(ms)?null:new Date(ms).toISOString(); }
+  function build(){
+    var shows=[], bad=0;
+    rows().forEach(function(d){var v=read(d); if(!v.name.trim()) return;
+      var at=toIso(v.date,v.start); if(!at){bad++;return;}
+      var s={name:v.name.trim(),at:at,guests:v.guests.split(/\r?\n/).map(function(g){return g.trim();}).filter(Boolean)};
+      var end=toIso(v.date,v.end); if(end){ if(end<at) end=new Date(Date.parse(end)+86400e3).toISOString(); s.endAt=end; }
+      shows.push(s);});
+    shows.sort(function(a,b){return a.at<b.at?-1:1;});
+    var json=JSON.stringify({updated:new Date().toISOString(),nextShows:shows},null,2);
+    out.textContent=json;
+    say(shows.length+' show'+(shows.length===1?'':'s')+' in the JSON'+(bad?' · '+bad+' skipped: missing date or start time':''), bad?'warn':'ok');
+    try{localStorage.setItem(KEY,JSON.stringify({tz:tz.value,rows:rows().map(read)}));}catch(e){}
+    return json;
+  }
+  function fill(shows){ list.innerHTML=''; (shows.length?shows:[{}]).forEach(function(s,i){
+    var at=s.at?new Date(s.at):null, end=s.endAt?new Date(s.endAt):null, u=tz.value==='utc';
+    function dt(x){return !x?'':u?x.toISOString().slice(0,10):x.getFullYear()+'-'+p(x.getMonth()+1)+'-'+p(x.getDate());}
+    function tm(x){return !x?'':u?x.toISOString().slice(11,16):p(x.getHours())+':'+p(x.getMinutes());}
+    function p(n){return n<10?'0'+n:''+n;}
+    row(i+1,{name:s.name||'',date:dt(at),start:tm(at),end:tm(end),guests:(s.guests||[]).join('\n')});});
+    while(rows().length<2) row(rows().length+1);
+  }
+  document.getElementById('add').onclick=function(){row(rows().length+1);};
+  document.getElementById('build').onclick=build;
+  document.getElementById('copy').onclick=function(){var j=build();
+    (navigator.clipboard?navigator.clipboard.writeText(j):Promise.reject()).then(function(){say('Copied. Now paste it over manual.json on GitHub.','ok');},
+      function(){var r=document.createRange();r.selectNodeContents(out);getSelection().removeAllRanges();getSelection().addRange(r);say('Select-all is done for you: press Ctrl+C.','warn');});};
+  document.getElementById('load').onclick=function(){say('Loading…');
+    fetch('manual.json',{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(d){fill(d.nextShows||[]);say('Loaded the published manual.json','ok');})
+    .catch(function(){say('Could not load manual.json from this site (open this page from the Pages address, not as a file).','warn');});};
+  var draft=null; try{draft=JSON.parse(localStorage.getItem(KEY));}catch(e){}
+  if(draft&&draft.rows){tz.value=draft.tz||'utc';draft.rows.forEach(function(v,i){row(i+1,v);});} else fill([]);
+})();
+</script>
+</body>
+</html>
