@@ -7,7 +7,8 @@ Two ways to run a This EVE Life stream. Pick one before the show starts.
 | Use it when | The VPS and thisevelife.space are up | thisevelife.space is down, the feed is wrong, or you want nothing automatic |
 | Overlay pages come from | thisevelife.space/overlay/ (VPS) | ceemaeve.github.io/tel-manual/ (GitHub Pages) |
 | Today, Next Episode, guest plates | Discord events through /api/public/feed | manual.json, which you edit |
-| Speaking glow, avatars, Up Next from Discord | On | Off (Up Next reads manual.json) |
+| Guest avatars | On, from the feed | On, from manual.json (portraits come from CCP, not the VPS; a guest with no exact EVE name shows the logo) |
+| Speaking glow, Up Next from Discord | On | Off (Up Next reads manual.json) |
 | Credits names, music, bumper | VPS files | credits-names.txt, credits/music.mp3 and credits/bumper.mp4 in the tel-manual repo (copied there from the stream PC) |
 | Pre-show music, Now Playing, Countdown, alerts, Stream Deck | Local to the PC | Same, unchanged |
 | OBS scene collection | TEL-Auto | TEL-Manual (same scene names) |
@@ -25,7 +26,8 @@ is not touched by any of this.
 3. Credits: edit https://github.com/ceemaeve/tel-manual/edit/main/credits-names.txt the same way.
 4. OBS: Scene Collection → TEL-Manual. Same Stream Deck keys; no re-pointing.
 5. Click through PreShow, the camera scene for today's guest count, Break, Credits and Outro.
-   A blank plate means manual.json has not reached Pages yet: right-click the source → Refresh.
+   A blank plate or avatar means manual.json has not reached Pages yet: right-click the source → Refresh.
+   Avatars need the exact EVE character name in Guests; otherwise the slot shows the TEL logo.
 
 Times in manual.json are UTC (EVE time). The editor converts from Pacific if you choose that.
 
@@ -39,7 +41,7 @@ OBS: Scene Collection → TEL-Auto. Nothing else to undo.
 2. PowerShell: `powershell -ExecutionPolicy Bypass -File make-tel-manual.ps1 -Export "<path>\TEL-Auto.json"`
    (the script is in this repo; download it or run it from a tel-sites checkout at `tel-manual/`).
    It writes `TELManual.json` beside the export: overlay URLs re-pointed to the Pages site with
-   `?src=manual`, avatar sources removed, Election and Month removed, collection renamed TEL-Manual.
+   `?src=manual` (avatar sources included), Election and Month removed, collection renamed TEL-Manual.
 3. OBS: Scene Collection → Import → `TELManual.json`.
 4. Upload the credits song as `credits/music.mp3` and the bumper as `credits/bumper.mp4` to the
    tel-manual repo (GitHub: Add file → Upload files, into a `credits` folder). The publish script

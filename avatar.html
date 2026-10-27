@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>This EVE Life · Guest avatar</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  /* OBS Browser Source, one per guest slot, placed UNDER the scene overlay (a guest with a camera covers it).
+     Shows the guest's EVE portrait, no name plate (the scene overlay already has one). Fully see-through when there is
+     no show in the guest window, no guest in that slot, or nothing could be loaded.
+
+     Browser Source size: 2Cam 848 x 477, 3Cam 576 x 324, 4Cam 620 x 349.
+     ?slot=2cam|3cam|4cam   sets the picture shape (default 3cam); size the source to match
+     ?g=1|2|3               which guest, in feed order (default 1)
+     ?g1=Name (or ?g2=, ?g3=)  type the guest by hand, same as on the camera pages
+     ?char=Exact EVE Name   or  ?id=<characterID>   force the portrait when the Guests line is not the exact character name
+     ?demo                  sample portrait for lining the source up without a show
+     ?src=manual            TEL-Manual backup: read manual.json next to this page instead of the VPS feed (portraits still
+                            come from CCP, so no VPS is needed); without it the page behaves exactly as before
+     ?now=2026-10-10T20:30Z test clock (same as the camera pages)
+     ?debug                 prints what it is doing in the corner (turn off for stream) */
+  :root{ --void:#03060e; --blue:#2e8bff; --cyan:#35d6ff; --edge:#1c2c4d; }
+  *{box-sizing:border-box}
+  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent}
+  #stage{position:absolute;left:0;top:0;transform-origin:0 0;overflow:hidden;background:transparent;opacity:0;transition:opacity .45s ease}
+  #stage.on{opacity:1}
+  .bg{position:absolute;inset:-12%;background-size:cover;background-position:center;filter:blur(26px) brightness(.5) saturate(1.15);}
+  .tint{position:absolute;inset:0;background:linear-gradient(135deg,rgba(46,139,255,.30),rgba(3,6,14,.35) 55%,rgba(242,45,200,.16))}
+  .vig{position:absolute;inset:0;box-shadow:inset 0 0 90px rgba(3,6,14,.75)}
+  .fg{position:absolute;top:0;height:100%;aspect-ratio:1/1;left:50%;transform:translateX(-50%);background-size:cover;background-position:center;
+      box-shadow:0 0 0 2px rgba(53,214,255,.35),0 0 26px rgba(46,139,255,.45)}
+  .logo{position:absolute;left:50%;top:50%;width:min(52%,82%);transform:translate(-50%,-50%);display:none}
+  #stage.fallback .fg{display:none}
+  #stage.fallback .logo{display:block;filter:drop-shadow(0 0 14px rgba(46,139,255,.6))}
+  #stage.fallback .bg{background-image:none;background:radial-gradient(circle at 50% 40%,#0e1f45,#03060e 75%);filter:none}
+  #dbg{position:fixed;left:4px;bottom:4px;font:12px/1.3 Consolas,monospace;color:#9fe;background:rgba(0,0,0,.7);padding:3px 6px;display:none;z-index:9;max-width:96%}
+</style>
+</head>
+<body>
+<div id="stage"><div class="bg" id="bg"></div><div class="tint"></div><div class="vig"></div><div class="fg" id="fg"></div><img class="logo" id="logo" alt="" src="data:image/png;base64,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"></div>
+<div id="dbg"></div>
+<script>
+(function(){
+  var q=new URLSearchParams(location.search);
+  var SIZES={'2cam':[848,477],'3cam':[576,324],'4cam':[620,349]};
+  var slot=SIZES[q.get('slot')]?q.get('slot'):'3cam', W=SIZES[slot][0], H=SIZES[slot][1];
+  var G=Math.max(1,Math.min(3,parseInt(q.get('g'),10)||1));
+  var stage=document.getElementById('stage'), bg=document.getElementById('bg'), fg=document.getElementById('fg'), dbg=document.getElementById('dbg');
+  var DEBUG=q.has('debug');
+  function log(m){ try{console.log('[avatar] '+m);}catch(e){} if(DEBUG){dbg.style.display='block';dbg.textContent=m;} }
+  function fit(){                      // lay out at the slot size, scale to whatever size the source really is
+    stage.style.width=W+'px'; stage.style.height=H+'px';
+    var s=Math.min(innerWidth/W,innerHeight/H);
+    stage.style.transform='scale('+s+')';
+    stage.style.left=((innerWidth-W*s)/2)+'px'; stage.style.top=((innerHeight-H*s)/2)+'px';
+  }
+  addEventListener('resize',fit); fit();
+
+  /* ---------- show timing: the same rule as the camera pages ---------- */
+  var MANUAL=q.get('src')==='manual';   // TEL-Manual: manual.json beside this page, same as the camera pages
+  var FEED_URL=MANUAL?'manual.json':'/api/public/feed', REFRESH_MS=2*60*1000, LEAD_MS=90*60*1000, HOLD_MS=30*60*1000, MEMO_KEY='tel-last-show';
+  var SKIP_RE=/no\s*show|vacation|to\s*be\s*booked|\bTBB\b|cancel/i;
+  var TEST_NOW=q.get('now')?Date.parse(q.get('now')):NaN, CLOCK_OFF=isNaN(TEST_NOW)?0:TEST_NOW-Date.now();
+  function nowMs(){return Date.now()+CLOCK_OFF;}
+  function pickShow(xs,now){
+    var live=xs.filter(function(x){return now>=x.at&&now<x.end;})[0];
+    if(live) return {x:live,state:'live'};
+    var nx=xs.filter(function(x){return x.at>now;})[0];
+    var held=xs.filter(function(x){return now>=x.end&&now<x.end+HOLD_MS;}).sort(function(a,b){return b.end-a.end;})[0];
+    if(held&&!(nx&&nx.at<held.end+HOLD_MS)) return {x:held,state:'held'};
+    return nx?{x:nx,state:'next'}:null;
+  }
+  function namesOf(str){ return String(str||'').split(/[;\n]/).map(function(x){return x.trim();}).filter(Boolean).map(function(n){return {name:n};}); }
+  function guestsOf(show){
+    if(Array.isArray(show.guests)) return show.guests.map(function(g){return {name:typeof g==='string'?g.trim():String(g&&g.name||'').trim()};}).filter(function(g){return g.name;});
+    var m=/Guests?\s*:\s*([^\n]+)/i.exec(show.desc||'');
+    return m?namesOf(m[1].replace(/…$/,'')):[];
+  }
+  function currentShow(list){
+    var now=nowMs();
+    var xs=(list||[]).filter(function(s){return !SKIP_RE.test(s.name||'');}).map(function(s){var at=Date.parse(s.at);return {s:s,at:at,end:s.endAt?Date.parse(s.endAt):at+3*3600e3};})
+      .filter(function(x){return !isNaN(x.at);}).sort(function(a,b){return a.at-b.at;});
+    var p=pickShow(xs,now);
+    if(!p||(p.state==='next'&&p.x.at-now>LEAD_MS)) return null;
+    return p.x;
+  }
+  function recalled(){      // the camera pages store the current show's guests; reuse it if the feed is unreachable
+    try{ var m=JSON.parse(localStorage.getItem(MEMO_KEY)||'null'); var now=nowMs();
+      return m&&now>=(m.at||m.end)-LEAD_MS&&now<m.end+HOLD_MS?m.guests:null; }catch(e){ return null; }
+  }
+
+  /* ---------- name -> character id (CCP ESI, no login) ---------- */
+  var ESI_URL='https://esi.evetech.net/latest/universe/ids/';
+  var IMG_URL='https://images.evetech.net/characters/';
+  var cache={};                        // lowercase name -> id, or 0 when ESI said "no such character" (kept for the session)
+  function lookup(name){
+    var k=name.toLowerCase();
+    if(k in cache) return Promise.resolve(cache[k]);
+    return fetch(ESI_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify([name])})
+      .then(function(r){ if(!r.ok) throw new Error('ESI HTTP '+r.status); return r.json(); })
+      .then(function(d){
+        var c=(d&&d.characters||[]).filter(function(x){return String(x.name).toLowerCase()===k;})[0];
+        cache[k]=c?c.id:0; return cache[k];
+      });
+  }
+
+  /* ---------- drawing ---------- */
+  var shown=null;                      // key of what is on screen: 'id:123', 'logo' or '' (empty)
+  var DEMO_SVG="data:image/svg+xml;utf8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#25406f"/><stop offset="1" stop-color="#0b1730"/></linearGradient></defs><rect width="512" height="512" fill="url(#g)"/><circle cx="256" cy="200" r="86" fill="#7f95bd"/><path d="M76 512c0-110 80-180 180-180s180 70 180 180z" fill="#7f95bd"/></svg>');
+  function showEmpty(){ if(shown==='') return; shown=''; stage.classList.remove('on'); }
+  function showLogo(why){ log('logo: '+why); if(shown==='logo') return; shown='logo'; stage.classList.add('fallback'); stage.classList.add('on'); }
+  function showPortrait(key,url){
+    if(shown===key) return;
+    var im=new Image();               // load first so the slot never flashes a half-loaded picture
+    im.onload=function(){
+      shown=key; stage.classList.remove('fallback');
+      fg.style.backgroundImage='url("'+url+'")'; bg.style.backgroundImage='url("'+url+'")';
+      stage.classList.add('on'); log('portrait '+key);
+    };
+    im.onerror=function(){ showLogo('portrait image would not load ('+key+')'); };
+    im.src=url;
+  }
+  var want='';                         // the latest request, so a slow lookup cannot overwrite a newer guest
+  function apply(name){
+    var charQ=q.get('char'), idQ=q.get('id');
+    if(idQ&&/^\d+$/.test(idQ)){ want='id:'+idQ; return showPortrait('id:'+idQ,IMG_URL+idQ+'/portrait?size=512'); }
+    var n=(charQ||name||'').trim();
+    if(!n){ want=''; return showEmpty(); }
+    want=n.toLowerCase();
+    var mine=want;
+    lookup(n).then(function(id){
+      if(mine!==want) return;
+      if(id) showPortrait('id:'+id,IMG_URL+id+'/portrait?size=512');
+      else showLogo('no character named "'+n+'" (exact name needed; try ?char= or ?id=)');
+    }).catch(function(e){
+      if(mine!==want) return;
+      showLogo('lookup failed for "'+n+'": '+e.message);   // not cached, so the next feed refresh tries again
+    });
+  }
+
+  /* ---------- run ---------- */
+  if(q.has('demo')){ shown='demo'; stage.classList.remove('fallback'); fg.style.backgroundImage='url("'+DEMO_SVG+'")'; bg.style.backgroundImage='url("'+DEMO_SVG+'")'; stage.classList.add('on'); return; }
+  function guestName(guests){
+    var o=q.get('g'+G); if(o&&o.trim()) return o.trim().split(/[;\n]/)[0].trim();
+    return guests[G-1]?guests[G-1].name:'';
+  }
+  var lastNames=null;
+  function render(guests){
+    var name=guestName(guests||[]);
+    var key=name+'|'+(q.get('char')||'')+'|'+(q.get('id')||'');
+    if(key===lastNames && shown!=='logo') return;     // same guest: do nothing (a failed lookup is retried)
+    lastNames=key; apply(name);
+  }
+  function load(){
+    fetch(FEED_URL,{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){
+      var cur=currentShow(d.nextShows);
+      render(cur?guestsOf(cur.s):(recalled()||[]));
+    }).catch(function(e){ log('feed unreachable: '+e.message); render(recalled()||[]); });
+  }
+  if(q.get('g'+G)||q.get('char')||q.get('id')) render([]);   // hand-typed guests need no show
+  load(); setInterval(load,REFRESH_MS);
+})();
+</script>
+</body>
+</html>

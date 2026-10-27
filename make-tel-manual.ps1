@@ -6,8 +6,8 @@
   Reads TEL-Auto.json (OBS: Scene Collection > Export), writes TELManual.json next to it, and
   leaves the export untouched. In the copy:
     - every Browser Source URL under thisevelife.space/overlay/ points at the TEL-Manual site
-      (https://ceemaeve.github.io/tel-manual/) with ?src=manual added
-    - the guest avatar sources (avatar.html) are removed from every scene
+      (https://ceemaeve.github.io/tel-manual/) with ?src=manual added; this includes the guest
+      avatar sources (avatar.html), which then read guests from manual.json and portraits from CCP
     - the Election and Month scenes are removed (not part of the backup)
     - the collection is renamed TEL-Manual
   Everything else (cameras, Countdown, Now Playing, alerts, audio, scene names) is copied as is.
@@ -30,7 +30,7 @@ if (-not $Out) { $Out = Join-Path (Split-Path -Parent (Resolve-Path $Export)) 'T
 $json = Get-Content -LiteralPath $Export -Raw -Encoding UTF8
 $doc = $json | ConvertFrom-Json
 
-# 1. Rewrite overlay URLs and find the avatar sources.
+# 1. Rewrite overlay URLs (avatar.html included) and find the Election and Month sources.
 $rx = [regex]'^(?:https?://)?(?:www\.)?thisevelife\.space/overlay/([A-Za-z0-9_-]+\.html)(?:\?(.*))?$'
 $dropSources = New-Object System.Collections.Generic.List[string]
 $rewritten = 0
@@ -39,14 +39,14 @@ foreach ($s in $doc.sources) {
   $m = $rx.Match($s.settings.url)
   if (-not $m.Success) { continue }
   $page = $m.Groups[1].Value
-  if ($page -ieq 'avatar.html' -or $page -ieq 'election.html' -or $page -ieq 'month.html') { $dropSources.Add($s.name); continue }
+  if ($page -ieq 'election.html' -or $page -ieq 'month.html') { $dropSources.Add($s.name); continue }
   $q = 'src=manual'
   if ($m.Groups[2].Success -and $m.Groups[2].Value) { $q = 'src=manual&' + $m.Groups[2].Value }
   $s.settings.url = "$ManualBase$page`?$q"
   $rewritten++
 }
 
-# 2. Drop the chosen scenes and the avatar sources from every scene and group.
+# 2. Drop the chosen scenes and their page sources from every scene and group.
 foreach ($s in $doc.sources) { if ($s.id -eq 'scene' -and ($DropScenes -contains $s.name)) { $dropSources.Add($s.name) } }
 $doc.sources = @($doc.sources | Where-Object { $dropSources -notcontains $_.name })
 function Prune($container) {
