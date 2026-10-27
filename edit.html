@@ -28,6 +28,7 @@
   input,textarea,select{font:600 18px var(--body);color:var(--hi);background:var(--void);border:1px solid var(--edge);padding:10px 12px;min-height:44px;width:100%}
   textarea{min-height:120px;resize:vertical;font-family:var(--mono);font-size:16px;font-weight:400}
   input:focus,textarea:focus,select:focus,button:focus-visible,a:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+  input.missing{border-color:var(--warn);box-shadow:0 0 0 1px var(--warn)}
   .row{display:grid;grid-template-columns:1fr 1fr;gap:14px} .row3{display:grid;grid-template-columns:2fr 1fr 1fr;gap:14px}
   @media(max-width:620px){.row,.row3{grid-template-columns:1fr}}
   .stack{display:flex;flex-direction:column;gap:14px}
@@ -110,15 +111,18 @@
     return isNaN(ms)?null:new Date(ms).toISOString(); }
   function build(){
     var shows=[], bad=0;
-    rows().forEach(function(d){var v=read(d); if(!v.name.trim()) return;
-      var at=toIso(v.date,v.start); if(!at){bad++;return;}
+    rows().forEach(function(d){var v=read(d);
+      d.querySelectorAll('input.missing').forEach(function(el){el.classList.remove('missing');});
+      if(!v.name.trim()) return;
+      var at=toIso(v.date,v.start);
+      if(!at){ bad++; ['date','start'].forEach(function(k){ if(!v[k]) d.querySelector('[data-k="'+k+'"]').classList.add('missing'); }); return; }
       var s={name:v.name.trim(),at:at,guests:v.guests.split(/\r?\n/).map(function(g){return g.trim();}).filter(Boolean)};
       var end=toIso(v.date,v.end); if(end){ if(end<at) end=new Date(Date.parse(end)+86400e3).toISOString(); s.endAt=end; }
       shows.push(s);});
     shows.sort(function(a,b){return a.at<b.at?-1:1;});
     var json=JSON.stringify({updated:new Date().toISOString(),nextShows:shows},null,2);
     out.textContent=json;
-    say(shows.length+' show'+(shows.length===1?'':'s')+' in the JSON'+(bad?' · '+bad+' skipped: missing date or start time':''), bad?'warn':'ok');
+    say(shows.length+' show'+(shows.length===1?'':'s')+' in the JSON'+(bad?' · '+bad+' skipped: the boxes outlined in orange are empty or incomplete (a time needs hours, minutes and AM/PM)':''), bad?'warn':'ok');
     try{localStorage.setItem(KEY,JSON.stringify({tz:tz.value,rows:rows().map(read)}));}catch(e){}
     return json;
   }
