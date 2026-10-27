@@ -1,16 +1,29 @@
 {
-  "updated": "2026-10-26T23:00:00Z",
+  "updated": "2026-10-27T06:20:17.516Z",
   "nextShows": [
     {
-      "name": "This EVE Life - TEL-Manual test show",
-      "at": "2026-11-02T20:00:00Z",
-      "endAt": "2026-11-02T22:00:00Z",
-      "guests": ["Guest One", "Guest Two"]
+      "name": "EP 901 - Holy Shit",
+      "at": "2026-10-28T12:00:00.000Z",
+      "guests": [
+        "Ceema",
+        "BriscRubal"
+      ]
     },
     {
-      "name": "This EVE Life - next show goes here",
-      "at": "2026-11-05T20:00:00Z",
-      "guests": []
+      "name": "EP 902 - Jesus Christ",
+      "at": "2026-10-30T14:00:00.000Z",
+      "guests": [
+        "Ceema",
+        "BriscRubal"
+      ]
+    },
+    {
+      "name": "EP 900 - Holy Shit Ceema Won",
+      "at": "2027-10-27T08:00:00.000Z",
+      "guests": [
+        "Ceema",
+        "BriscRubal"
+      ]
     }
   ]
 }
