@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-  Builds the TEL-Manual OBS scene collection from an export of TEL-Normal.
+  Builds the TEL-Manual OBS scene collection from an export of TEL-Auto.
 
 .DESCRIPTION
-  Reads TELNormal.json (OBS: Scene Collection > Export), writes TELManual.json next to it, and
+  Reads TEL-Auto.json (OBS: Scene Collection > Export), writes TELManual.json next to it, and
   leaves the export untouched. In the copy:
     - every Browser Source URL under thisevelife.space/overlay/ points at the TEL-Manual site
       (https://ceemaeve.github.io/tel-manual/) with ?src=manual added
@@ -14,7 +14,7 @@
   Run it by hand on the stream PC; it is not a scheduled task.
 
 .EXAMPLE
-  powershell -ExecutionPolicy Bypass -File make-tel-manual.ps1 -Export "$HOME\Downloads\TELNormal.json"
+  powershell -ExecutionPolicy Bypass -File make-tel-manual.ps1 -Export "$HOME\Downloads\TEL-Auto.json"
   Then OBS: Scene Collection > Import > TELManual.json
 #>
 param(
