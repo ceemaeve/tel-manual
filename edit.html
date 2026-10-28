@@ -49,8 +49,13 @@
 <div class="wrap">
   <header class="stack">
     <h1>THIS <span>EVE</span> LIFE · TEL-Manual Editor</h1>
-    <p class="note">Fills <kbd>manual.json</kbd> for the TEL-Manual backup overlays. Nothing here touches the VPS or the automatic set. Fill in the shows, press <b>Build JSON</b>, copy it, and paste it over <kbd>manual.json</kbd> on GitHub. The overlays pick it up within about 5 minutes (GitHub Pages cache); right-click → Refresh in OBS to hurry it.</p>
+    <p class="note"><kbd>manual.json</kbd> is filled from the Discord calendar every 15 minutes by the <a href="https://github.com/ceemaeve/tel-manual/actions/workflows/feed.yml" target="_blank" rel="noopener">TEL-Manual feed</a> run, so this editor is only for when you want to write the list yourself. Nothing here touches the VPS or the automatic set. Fill in the shows, press <b>Build JSON</b>, copy it, and paste it over <kbd>manual.json</kbd> on GitHub. The overlays pick it up within about 5 minutes (GitHub Pages cache); right-click → Refresh in OBS to hurry it.</p>
   </header>
+
+  <section class="panel">
+    <h2>Hold</h2>
+    <label style="flex-direction:row;align-items:center;gap:12px;text-transform:none;letter-spacing:0;font-size:17px;color:var(--mid)"><input type="checkbox" id="hold" style="width:22px;height:22px;min-height:0"> Hold: the 15-minute Discord refresh leaves my list alone until I take this off</label>
+  </section>
 
   <section class="panel">
     <h2>Time zone</h2>
@@ -120,7 +125,8 @@
       var end=toIso(v.date,v.end); if(end){ if(end<at) end=new Date(Date.parse(end)+86400e3).toISOString(); s.endAt=end; }
       shows.push(s);});
     shows.sort(function(a,b){return a.at<b.at?-1:1;});
-    var json=JSON.stringify({updated:new Date().toISOString(),nextShows:shows},null,2);
+    var doc={updated:new Date().toISOString(),source:'editor',nextShows:shows}; if(document.getElementById('hold').checked) doc.hold=true;
+    var json=JSON.stringify(doc,null,2);
     out.textContent=json;
     say(shows.length+' show'+(shows.length===1?'':'s')+' in the JSON'+(bad?' · '+bad+' skipped: the boxes outlined in orange are empty or incomplete (a time needs hours, minutes and AM/PM)':''), bad?'warn':'ok');
     try{localStorage.setItem(KEY,JSON.stringify({tz:tz.value,rows:rows().map(read)}));}catch(e){}
@@ -140,7 +146,7 @@
     (navigator.clipboard?navigator.clipboard.writeText(j):Promise.reject()).then(function(){say('Copied. Now paste it over manual.json on GitHub.','ok');},
       function(){var r=document.createRange();r.selectNodeContents(out);getSelection().removeAllRanges();getSelection().addRange(r);say('Select-all is done for you: press Ctrl+C.','warn');});};
   document.getElementById('load').onclick=function(){say('Loading…');
-    fetch('manual.json',{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(d){fill(d.nextShows||[]);say('Loaded the published manual.json','ok');})
+    fetch('manual.json',{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(d){fill(d.nextShows||[]);document.getElementById('hold').checked=d.hold===true;say('Loaded the published manual.json ('+(d.source==='discord'?'from Discord':'hand-written')+(d.hold===true?', hold on':'')+')','ok');})
     .catch(function(){say('Could not load manual.json from this site (open this page from the Pages address, not as a file).','warn');});};
   var draft=null; try{draft=JSON.parse(localStorage.getItem(KEY));}catch(e){}
   if(draft&&draft.rows){tz.value=draft.tz||'utc';draft.rows.forEach(function(v,i){row(i+1,v);});} else fill([]);

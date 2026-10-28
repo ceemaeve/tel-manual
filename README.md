@@ -6,7 +6,7 @@ Two ways to run a This EVE Life stream. Pick one before the show starts.
 | --- | --- | --- |
 | Use it when | The VPS and thisevelife.space are up | thisevelife.space is down, the feed is wrong, or you want nothing automatic |
 | Overlay pages come from | thisevelife.space/overlay/ (VPS) | ceemaeve.github.io/tel-manual/ (GitHub Pages) |
-| Today, Next Episode, guest plates | Discord events through /api/public/feed | manual.json, which you edit |
+| Today, Next Episode, guest plates | Discord events through /api/public/feed | manual.json, filled from the same Discord events every 15 minutes by the TEL-Manual feed run on GitHub (no VPS involved); the editor is the override |
 | Guest avatars | On, from the feed | On, from manual.json (portraits come from CCP, not the VPS; a guest with no exact EVE name shows the logo) |
 | Speaking glow, Up Next from Discord | On | Off (Up Next reads manual.json) |
 | Credits names, music, bumper | VPS files | credits-names.txt, credits/music.mp3 and credits/bumper.mp4 in the tel-manual repo (copied there from the stream PC) |
@@ -19,10 +19,13 @@ is not touched by any of this.
 
 ## Switching to Manual on show day
 
-1. Open https://ceemaeve.github.io/tel-manual/ (the editor). Fill in today's show and the next
-   one or two, press Build JSON, Copy JSON.
-2. Open https://github.com/ceemaeve/tel-manual/edit/main/manual.json, paste over it, Commit changes.
-   Pages serves the new file within about 5 minutes.
+1. Check https://ceemaeve.github.io/tel-manual/manual.json shows today's show. It is refreshed from
+   Discord every 15 minutes by the "TEL-Manual feed" run (Actions tab); if Discord itself is wrong or
+   down, use the editor instead: https://ceemaeve.github.io/tel-manual/, fill in the shows, tick Hold,
+   Build JSON, Copy JSON.
+2. Only with the editor: open https://github.com/ceemaeve/tel-manual/edit/main/manual.json, paste over
+   it, Commit changes. Pages serves the new file within about 5 minutes. Hold keeps the refresh from
+   overwriting it; take Hold off (or paste a JSON without it) to go back to Discord.
 3. Credits: edit https://github.com/ceemaeve/tel-manual/edit/main/credits-names.txt the same way.
 4. OBS: Scene Collection → TEL-Manual. Same Stream Deck keys; no re-pointing.
 5. Click through PreShow, the camera scene for today's guest count, Break, Credits and Outro.
