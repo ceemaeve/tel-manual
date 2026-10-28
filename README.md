@@ -50,6 +50,15 @@ OBS: Scene Collection → TEL-Auto. Nothing else to undo.
 
 Redo steps 1 to 3 after any change to TEL-Auto you want in the backup.
 
+## YouTube thumbnails when the VPS is down
+
+The weekend thumbnails are drawn on the VPS every evening. While it is down, the same script runs on GitHub
+instead: in ceemaeve/tel-sites open Actions → "TEL thumbs (VPS-down backup)" → Run workflow (tick "dry run"
+first to see what it would draw). It reads the Discord calendar, draws the next 4 days with the normal template,
+and pushes the PNGs plus their episodes.json entries to main. The run summary lists the title, first line and
+tags to paste into YouTube Studio, where the thumbnail is set by hand until the watcher is back. Never scheduled:
+it is only pressed during an outage, so it never fights the VPS over the same episodes.
+
 ## Keeping the pages current
 
 The pages live in ceemaeve/tel-sites under `stream/overlay/`. After an overlay change, a TEL Ops
