@@ -1,28 +1,41 @@
 {
-  "updated": "2026-10-27T06:20:17.516Z",
+  "updated": "2026-10-28T18:35:44Z",
+  "source": "discord",
   "nextShows": [
     {
-      "name": "EP 901 - Holy Shit",
-      "at": "2026-10-28T12:00:00.000Z",
+      "name": "BLOOD IN THE FANFEST SPECIAL: THE BRAVE TALE OF BEEJEN TILDADI  (OH EP 5)",
+      "desc": "Beejen Tildadi joins me on the show to discuss attending fanfest, 5 months into playing EVE, and how FC Swift got his name wrong.  They'll …",
+      "at": "2026-10-30T02:00:00.000Z",
+      "endAt": "2026-10-30T03:00:00.000Z",
       "guests": [
-        "Ceema",
-        "BriscRubal"
+        "Beejen Tildadi"
       ]
     },
     {
-      "name": "EP 902 - Jesus Christ",
-      "at": "2026-10-30T14:00:00.000Z",
+      "name": "CSM CANDIDATE INTERVIEW W/ TIKKA | THIS EVE LIFE SPECIAL #13",
+      "desc": "Tikka joins me to discuss their CSM Campaign",
+      "at": "2026-10-31T21:00:00.000Z",
+      "endAt": "2026-10-31T22:00:00.000Z",
       "guests": [
-        "Ceema",
-        "BriscRubal"
+        "Tikka"
       ]
     },
     {
-      "name": "EP 900 - Holy Shit Ceema Won",
-      "at": "2027-10-27T08:00:00.000Z",
+      "name": "PLANETS IN SPACE: TAKING THE PAIN OUT OF PLANETARY INTERACTION (EP 37)",
+      "desc": "SniperEagle1 is a corp CEO, Space Cat Herder and Third Party app developer for Planets In Space, a nifty tool to help you create templates …",
+      "at": "2026-11-01T22:00:00.000Z",
+      "endAt": "2026-11-01T23:00:00.000Z",
       "guests": [
-        "Ceema",
-        "BriscRubal"
+        "SniperEagle1"
+      ]
+    },
+    {
+      "name": "INTERVIEW W/ DOMANARK; NULLSEC, OPEN COMS AND STREAMING (EP 51)",
+      "desc": "Experience in null-sec and hosting a talk show",
+      "at": "2026-11-04T03:00:00.000Z",
+      "endAt": "2026-11-04T04:00:00.000Z",
+      "guests": [
+        "DomanarK"
       ]
     }
   ]
