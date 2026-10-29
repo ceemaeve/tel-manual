@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-28T18:35:44Z",
+  "updated": "2026-10-29T02:20:43Z",
   "source": "discord",
   "nextShows": [
     {
@@ -9,6 +9,15 @@
       "endAt": "2026-10-30T03:00:00.000Z",
       "guests": [
         "Beejen Tildadi"
+      ]
+    },
+    {
+      "name": "CSM CANDIDATE INTERVIEW W/  JOILOVE SUNRUNNER | THIS EVE LIFE SPECIAL #13",
+      "desc": "Joilove Sunrunner joins me to discuss their CSM Campaign",
+      "at": "2026-10-31T19:00:00.000Z",
+      "endAt": "2026-10-31T20:00:00.000Z",
+      "guests": [
+        "Joilove Sunrunner"
       ]
     },
     {
