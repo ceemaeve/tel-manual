@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-29T02:20:43Z",
+  "updated": "2026-10-29T03:12:37Z",
   "source": "discord",
   "nextShows": [
     {
@@ -45,6 +45,15 @@
       "endAt": "2026-11-04T04:00:00.000Z",
       "guests": [
         "DomanarK"
+      ]
+    },
+    {
+      "name": "FRESH BLOOD IN NEW EDEN PT. 4 W/ BEEFINSPACE (EP 54)",
+      "desc": "New Player to EVE BeefInSpace joins me on the show to discuss EVE Online, their entrance into our universe and why they plan on staying!",
+      "at": "2026-11-06T03:00:00.000Z",
+      "endAt": "2026-11-06T04:00:00.000Z",
+      "guests": [
+        "BeefInSpace"
       ]
     }
   ]
