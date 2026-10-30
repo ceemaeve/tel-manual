@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-30T03:14:09Z",
+  "updated": "2026-10-30T23:16:57Z",
   "source": "discord",
   "nextShows": [
     {
@@ -45,6 +45,15 @@
       "endAt": "2026-11-06T04:00:00.000Z",
       "guests": [
         "BeefInSpace"
+      ]
+    },
+    {
+      "name": "THE MINER WARRIORS OF NULLSEC: RIOTRICK OF SLYCE ALLIANCE | EVE ONLINE (EP 38)",
+      "desc": "Don't let their size fool you, SLYCE has proven time and time again to be capable industrialists, miners, and the backbone of any fleet …",
+      "at": "2026-11-07T22:00:00.000Z",
+      "endAt": "2026-11-07T23:00:00.000Z",
+      "guests": [
+        "RiotRick"
       ]
     }
   ]
