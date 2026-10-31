@@ -1,25 +1,7 @@
 {
-  "updated": "2026-10-30T23:16:57Z",
+  "updated": "2026-10-31T22:30:53Z",
   "source": "discord",
   "nextShows": [
-    {
-      "name": "CSM CANDIDATE INTERVIEW W/  JOILOVE SUNRUNNER | THIS EVE LIFE SPECIAL #12",
-      "desc": "Joilove Sunrunner joins me to discuss their CSM Campaign",
-      "at": "2026-10-31T19:00:00.000Z",
-      "endAt": "2026-10-31T20:00:00.000Z",
-      "guests": [
-        "Joilove Sunrunner"
-      ]
-    },
-    {
-      "name": "CSM CANDIDATE INTERVIEW W/ TIKKA | THIS EVE LIFE SPECIAL #13",
-      "desc": "Tikka joins me to discuss their CSM Campaign",
-      "at": "2026-10-31T21:00:00.000Z",
-      "endAt": "2026-10-31T22:00:00.000Z",
-      "guests": [
-        "Tikka"
-      ]
-    },
     {
       "name": "PLANETS IN SPACE: TAKING THE PAIN OUT OF PLANETARY INTERACTION (EP 37)",
       "desc": "SniperEagle1 is a corp CEO, Space Cat Herder and Third Party app developer for Planets In Space, a nifty tool to help you create templates …",
@@ -54,6 +36,16 @@
       "endAt": "2026-11-07T23:00:00.000Z",
       "guests": [
         "RiotRick"
+      ]
+    },
+    {
+      "name": "INTERVIEW W/ LAURA KARPINSKI & NOPE (EP 47)",
+      "desc": "Getting new players over the learning cliff",
+      "at": "2026-11-08T21:00:00.000Z",
+      "endAt": "2026-11-08T22:00:00.000Z",
+      "guests": [
+        "Laura Karpinski",
+        "Nope"
       ]
     }
   ]
