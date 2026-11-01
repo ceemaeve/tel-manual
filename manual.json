@@ -1,15 +1,13 @@
 {
-  "updated": "2026-10-31T22:30:53Z",
+  "updated": "2026-11-01T14:56:52Z",
   "source": "discord",
   "nextShows": [
     {
-      "name": "PLANETS IN SPACE: TAKING THE PAIN OUT OF PLANETARY INTERACTION (EP 37)",
-      "desc": "SniperEagle1 is a corp CEO, Space Cat Herder and Third Party app developer for Planets In Space, a nifty tool to help you create templates …",
-      "at": "2026-11-01T22:00:00.000Z",
-      "endAt": "2026-11-01T23:00:00.000Z",
-      "guests": [
-        "SniperEagle1"
-      ]
+      "name": "CEEMA ON THE META SHOW",
+      "desc": "I'll be on The Meta Show to talk to Dave and Keith about Topics of  yet to be determined.",
+      "at": "2026-11-01T20:00:00.000Z",
+      "endAt": "2026-11-01T21:00:00.000Z",
+      "guests": []
     },
     {
       "name": "INTERVIEW W/ DOMANARK; NULLSEC, OPEN COMS AND STREAMING (EP 51)",
