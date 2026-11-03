@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>This EVE Life · Weather</title>
+<meta name="viewport" content="width=1920,height=1080">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800;900&family=Rajdhani:wght@600;700&family=Share+Tech+Mono&display=swap">
+<style>
+  /* OBS Browser Source: 1920 x 1080, fully transparent except three pieces. EVE's Weather Channel (added 2026-11-03).
+     EVE game capture goes BELOW this source, full screen. No camera, no host plate.
+
+       Weather scroll   bottom, where the Now Playing bar sits on Gameplay: x 180, y 893, 1560 x 52.
+                        Eight cities (San Francisco, Chicago, New York, London, Paris, Reykjavík, Hong Kong, Sydney) with
+                        the current condition and temperature from Open-Meteo (free, no key; the page fetches it
+                        every 10 minutes), then the EVE news from /api/public/news (patch notes, then CCP news, then
+                        the next This EVE Life show; the Meta Show ticker reads the same list; every 2 minutes).
+       Stream panel     upper right under the brand lockup: x 1240, y 116, 640 wide (to y 464). Live Now / Next Show from the
+                        Discord calendar (the timing rule of the camera scenes), then the YouTube, Spotify and
+                        Discord addresses.
+       Music            the Now Playing bar is NOT on this page: pc/weather-nowplaying.html (a local file on the
+                        stream PC) sits top left, x 60, y 56, 760 x 44, as its own Browser Source above this one.
+
+     Options: ?units=f|c|both (default both)   ?speed=55 (pixels per second)   ?news=0 (weather only)
+              ?ticker=0 (no scroll)   ?panel=0 (no stream panel)   ?title=Text (panel show name)
+              ?auto=0 (no calendar: the panel shows only ?title= and the addresses)   ?guide=1 (sample data, no fetch)
+              ?src=manual (TEL-Manual: manual.json next to this page for the shows; news is skipped, the weather still loads)
+              ?now=2026-11-03T20:30Z (test clock for the calendar) */
+  :root{
+    --void:#03060e; --edge:#1c2c4d;
+    --blue:#2e8bff; --cyan:#35d6ff; --magenta:#f22dc8; --pink:#ff5cc8;
+    --text-hi:#fff; --text-mid:#c9d6ee; --text-dim:#8b98b8;
+    --display:'Orbitron',system-ui,sans-serif;
+    --body:'Rajdhani',system-ui,sans-serif;
+    --mono:'Share Tech Mono',ui-monospace,monospace;
+    --ch:14px; --colL:1240px; --colW:640px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:1920px;height:1080px;overflow:hidden;background:transparent}
+  .stage{position:relative;width:1920px;height:1080px;transform-origin:0 0}
+  .chamfer{clip-path:polygon(var(--ch) 0,100% 0,100% calc(100% - var(--ch)),calc(100% - var(--ch)) 100%,0 100%,0 var(--ch))}
+
+  /* brand, right-aligned, level with the music bar on the left */
+  .brand{position:absolute;right:40px;top:56px;display:flex;align-items:center}
+  .brand-in{display:flex;align-items:center;gap:14px;padding:10px 22px 10px 12px;background:#03060ecc;border:1px solid var(--edge);border-radius:999px}
+  .wordmark{font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:.14em;color:var(--text-hi)}
+  .wordmark span{color:var(--pink)}
+
+  /* stream panel */
+  .panel{position:absolute;left:var(--colL);top:116px;width:var(--colW);padding:22px 30px 24px;
+    background:linear-gradient(180deg,#101a32f2,#060b1af5);border:1px solid var(--edge);display:flex;flex-direction:column;gap:16px}
+  .panel::before{content:"";position:absolute;left:0;top:24px;bottom:24px;width:5px;background:var(--cyan);box-shadow:0 0 18px #35d6ffaa}
+  .nopanel .panel{display:none}
+  .pl-label{font-family:var(--mono);font-size:26px;letter-spacing:.24em;text-transform:uppercase;color:var(--pink);line-height:1}
+  .pl-name{font-family:var(--display);font-weight:800;font-size:30px;line-height:1.2;color:var(--text-hi);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  .pl-when{font-family:var(--mono);font-size:26px;letter-spacing:.08em;color:var(--cyan);line-height:1}
+  .show{display:none;flex-direction:column;gap:10px}
+  .show.on{display:flex}
+  .rule{height:1px;background:linear-gradient(90deg,var(--pink),var(--blue));opacity:.7}
+  .links{display:flex;flex-direction:column;gap:10px}
+  .link{display:flex;align-items:center;gap:14px;font-family:var(--mono);font-size:26px;letter-spacing:.04em;color:var(--text-mid);white-space:nowrap}
+  .tag{flex:none;font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.16em;padding:2px 10px;border:1px solid var(--blue);color:var(--cyan);background:#1470e920;min-width:148px;text-align:center}
+  .tag.yt{border-color:#ff3030;color:#ff8080;background:#ff30301c}
+  .tag.sp{border-color:#1db954;color:#7be8a0;background:#1db95420}
+  .tag.dc{border-color:#5865f2;color:#a9b0ff;background:#5865f21f}
+
+  /* weather scroll: the Now Playing bar's spot on Gameplay */
+  .ticker{position:absolute;left:180px;top:893px;width:1560px;height:52px;display:flex;align-items:center;
+    background:linear-gradient(180deg,#101a32eb,#060b1af0);border:1px solid var(--edge);overflow:hidden}
+  .ticker::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:3px;background:linear-gradient(180deg,var(--cyan),var(--pink));box-shadow:0 0 12px #35d6ff66}
+  .noticker .ticker{display:none}
+  .tk-label{flex:none;display:flex;align-items:center;gap:12px;padding:0 22px 0 26px;height:100%;border-right:1px solid var(--edge);
+    font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.2em;text-transform:uppercase;color:var(--cyan);white-space:nowrap}
+  .tk-win{position:relative;flex:1;min-width:0;height:100%;overflow:hidden;
+    -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 40px,#000 calc(100% - 40px),transparent 100%);
+            mask-image:linear-gradient(90deg,transparent 0,#000 40px,#000 calc(100% - 40px),transparent 100%)}
+  .tk-track{position:absolute;left:0;top:0;height:100%;display:flex;align-items:center;white-space:nowrap;will-change:transform}
+  .tk-set{display:flex;align-items:center;flex:none;height:100%}
+  .tk-item{flex:none;display:flex;align-items:center;gap:12px;padding:0 28px;height:100%;font-family:var(--body);font-weight:600;font-size:28px;letter-spacing:.02em;color:var(--text-mid)}
+  .tk-city{font-family:var(--mono);font-size:26px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-hi)}
+  .tk-temp{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.04em;color:var(--pink)}
+  .tk-cond{color:var(--text-mid)}
+  .tk-item svg{width:30px;height:30px;flex:none;color:var(--cyan);filter:drop-shadow(0 0 6px #35d6ff66)}
+  .tk-item.night svg{color:#a9b0ff}
+  .tk-dot{flex:none;width:7px;height:7px;background:var(--pink);box-shadow:0 0 8px var(--pink);transform:rotate(45deg);display:block}
+  .tk-head{flex:none;font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:.2em;padding:2px 12px;margin:0 6px 0 10px;border:1px solid var(--pink);color:var(--pink);background:#f22dc81f}
+  .tk-kind{font-family:var(--mono);font-size:26px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan)}
+  .tk-kind.patch{color:var(--pink)}
+  @keyframes tkscroll{to{transform:translateX(calc(-1 * var(--w)))}}
+  @media(prefers-reduced-motion:reduce){.tk-track{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="brand"><div class="brand-in"><div class="wordmark">THIS <span>EVE</span> LIFE</div></div></div>
+
+  <div class="panel chamfer" id="panel">
+    <div class="show" id="show">
+      <div class="pl-label" id="plLabel">Live Now</div>
+      <div class="pl-name" id="plName"></div>
+      <div class="pl-when" id="plWhen"></div>
+      <div class="rule"></div>
+    </div>
+    <div class="links">
+      <div class="link"><b class="tag yt">YOUTUBE</b>youtube.com/@CeemaGPT</div>
+      <div class="link"><b class="tag sp">SPOTIFY</b>spotify.thisevelife.space</div>
+      <div class="link"><b class="tag dc">DISCORD</b>discord.thisevelife.space</div>
+    </div>
+  </div>
+
+  <div class="ticker" id="ticker"><div class="tk-label">EVE Weather</div><div class="tk-win" id="tkWin"><div class="tk-track" id="tkTrack"></div></div></div>
+</div>
+<script>
+  var q; try{ q=new URLSearchParams(location.search); }catch(e){ q={get:function(){return null}}; }
+  // ?src=manual: TEL-Manual backup. Shows come from manual.json next to this page; the news needs the VPS, so it is skipped.
+  var MANUAL=q.get('src')==='manual', GUIDE=q.get('guide')==='1', auto=q.get('auto')!=='0';
+  var UNITS=(q.get('units')||'both').toLowerCase(); if(UNITS!=='f'&&UNITS!=='c') UNITS='both';
+  var SPEED=Math.max(10,Math.min(300,parseFloat(q.get('speed'))||55));
+  var SHOW_NEWS=q.get('news')!=='0'&&!MANUAL, TITLE=q.get('title');
+  if(q.get('ticker')==='0') document.body.classList.add('noticker');
+  if(q.get('panel')==='0') document.body.classList.add('nopanel');
+  function fit(){
+    var s=Math.min(innerWidth/1920,innerHeight/1080), st=document.getElementById('stage');
+    st.style.transform = Math.abs(s-1)>.001 ? 'scale('+s+')' : '';
+  }
+  addEventListener('resize',fit); fit();
+  function el(t,c,x){var e=document.createElement(t); if(c) e.className=c; if(x!=null) e.textContent=x; return e;}
+
+  /* ---------- show timing (same rule in every TEL overlay) ----------
+     A show is ON from its start to its end, then HOLDS for 30 minutes, then the next show takes over.
+     If the next show starts inside those 30 minutes, it takes over at the end instead. ?now= is the test clock. */
+  var SKIP_RE=/no\s*show|vacation|to\s*be\s*booked|\bTBB\b|cancel/i;
+  var HOLD_MS=30*60*1000, LEAD_MS=90*60*1000;
+  var TEST_NOW=q.get('now')?Date.parse(q.get('now')):NaN, CLOCK_OFF=isNaN(TEST_NOW)?0:TEST_NOW-Date.now();
+  function nowMs(){return Date.now()+CLOCK_OFF;}
+  if(!isNaN(TEST_NOW)){
+    var tb=document.createElement('div');
+    tb.style.cssText='position:fixed;top:12px;left:900px;z-index:99;padding:8px 14px;background:#ffb648;color:#1a1000;font:700 22px/1 Consolas,monospace;letter-spacing:.06em';
+    var tick=function(){tb.textContent='TEST CLOCK '+new Date(nowMs()).toISOString().slice(0,16).replace('T',' ')+' UTC';};
+    tick(); setInterval(tick,15000); document.body.appendChild(tb);
+  }
+  function pickShow(xs,now){
+    var live=xs.filter(function(x){return now>=x.at&&now<x.end;})[0];
+    if(live) return {x:live,state:'live'};
+    var nx=xs.filter(function(x){return x.at>now;})[0];
+    var held=xs.filter(function(x){return now>=x.end&&now<x.end+HOLD_MS;}).sort(function(a,b){return b.end-a.end;})[0];
+    if(held&&!(nx&&nx.at<held.end+HOLD_MS)) return {x:held,state:'held'};
+    return nx?{x:nx,state:'next'}:null;
+  }
+  var DOW=['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  function p2(n){return n<10?'0'+n:''+n;}
+  function whenOf(ms){var d=new Date(ms); return DOW[d.getUTCDay()]+' '+(d.getUTCMonth()+1)+'/'+d.getUTCDate()+' · '+p2(d.getUTCHours())+':'+p2(d.getUTCMinutes())+' EVE';}
+
+  /* ---------- stream panel: Live Now / Next Show, then the addresses ---------- */
+  (function(){
+    var box=document.getElementById('show'), nameEl=document.getElementById('plName'), whenEl=document.getElementById('plWhen'), labEl=document.getElementById('plLabel');
+    var SCHED=MANUAL?['manual.json']:['/api/public/schedule','/api/public/feed'], REFRESH=2*60*1000;
+    function set(name,when,lbl){
+      if(!name){ box.classList.remove('on'); return; }
+      labEl.textContent=lbl; nameEl.textContent=name; whenEl.textContent=when||''; box.classList.add('on');
+    }
+    function apply(list){
+      var now=nowMs();
+      var xs=(list||[]).filter(function(s){return !SKIP_RE.test(s.name||'')&&s.ownChannel!==false;})
+        .map(function(s){var at=Date.parse(s.at);return {s:s,at:at,end:s.endAt?Date.parse(s.endAt):at+3*3600e3};})
+        .filter(function(x){return !isNaN(x.at);}).sort(function(a,b){return a.at-b.at;});
+      var p=pickShow(xs,now);
+      if(!p){ set(TITLE||'', '', 'Live Now'); return; }
+      var live=p.state!=='next'||p.x.at-now<=LEAD_MS;
+      set(TITLE||String(p.x.s.name||'').trim(), live?'':whenOf(p.x.at), live?'Live Now':'Next Show');
+    }
+    function get(cb){
+      var i=0;
+      (function nx(){
+        if(i>=SCHED.length){cb(null);return;}
+        fetch(SCHED[i++],{cache:'no-store'}).then(function(r){if(!r.ok) throw 0; return r.json();})
+          .then(function(d){cb(d.shows||d.nextShows||[]);}).catch(nx);
+      })();
+    }
+    function go(){
+      if(GUIDE){ set('This EVE Life · Episode Name Goes Here', whenOf(nowMs()+26*3600e3), 'Next Show'); return; }
+      if(!auto){ set(TITLE||'', '', 'Live Now'); return; }
+      get(function(list){ if(list) apply(list); else if(TITLE) set(TITLE,'','Live Now'); });
+    }
+    go(); setInterval(go,REFRESH);
+  })();
+
+  /* ---------- weather scroll ---------- */
+  (function(){
+    var track=document.getElementById('tkTrack'), win=document.getElementById('tkWin');
+    var CITIES=[['San Francisco',37.77,-122.42],['Chicago',41.88,-87.63],['New York',40.71,-74.01],['London',51.51,-0.13],
+                ['Paris',48.86,2.35],['Reykjavík',64.15,-21.94],['Hong Kong',22.32,114.17],['Sydney',-33.87,151.21]];
+    var WX_URL='https://api.open-meteo.com/v1/forecast?latitude='+CITIES.map(function(c){return c[1];}).join(',')
+      +'&longitude='+CITIES.map(function(c){return c[2];}).join(',')+'&current=temperature_2m,weather_code,is_day&timezone=auto';
+    var WX_MS=10*60*1000, NEWS_MS=2*60*1000;
+    var wx=null, news=null, sig=null;
+
+    // WMO weather codes -> [glyph, words]. Open-Meteo documents the codes on its forecast API page.
+    var G={
+      sun:'<circle cx="12" cy="12" r="4.2" fill="currentColor"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+      moon:'<path d="M14.5 3a8.5 8.5 0 1 0 6.5 13.6A7 7 0 0 1 14.5 3z" fill="currentColor"/>',
+      part:'<circle cx="8" cy="9" r="3.4" fill="currentColor"/><path d="M8 2.5v2M2.5 9h2M3.9 4.9l1.4 1.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9 20h8.5a3.5 3.5 0 0 0 .6-6.95A5 5 0 0 0 8.6 12.4 3.8 3.8 0 0 0 9 20z" fill="currentColor"/>',
+      cloud:'<path d="M7 19h10.5a4 4 0 0 0 .7-7.94A6 6 0 0 0 6.6 10.3 4.4 4.4 0 0 0 7 19z" fill="currentColor"/>',
+      fog:'<path d="M4 9h16M3 13h18M5 17h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+      rain:'<path d="M7 15h10.5a4 4 0 0 0 .7-7.94A6 6 0 0 0 6.6 6.3 4.4 4.4 0 0 0 7 15z" fill="currentColor"/><path d="M8.5 17.5l-1.2 3M12.5 17.5l-1.2 3M16.5 17.5l-1.2 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+      snow:'<path d="M7 14h10.5a4 4 0 0 0 .7-7.94A6 6 0 0 0 6.6 5.3 4.4 4.4 0 0 0 7 14z" fill="currentColor"/><circle cx="8.5" cy="18" r="1.4" fill="currentColor"/><circle cx="12.5" cy="20.5" r="1.4" fill="currentColor"/><circle cx="16.5" cy="18" r="1.4" fill="currentColor"/>',
+      storm:'<path d="M7 13h10.5a4 4 0 0 0 .7-7.94A6 6 0 0 0 6.6 4.3 4.4 4.4 0 0 0 7 13z" fill="currentColor"/><path d="M13 13l-3 5h3l-1.5 4.5 4-6.5h-3z" fill="currentColor"/>'
+    };
+    function cond(code,day){
+      code=+code;
+      if(code===0) return [day?'sun':'moon', day?'Clear':'Clear night'];
+      if(code<=2) return [day?'part':'moon', 'Partly cloudy'];
+      if(code===3) return ['cloud','Overcast'];
+      if(code<=48) return ['fog','Fog'];
+      if(code<=57) return ['rain','Drizzle'];
+      if(code<=67) return ['rain',code>=66?'Freezing rain':'Rain'];
+      if(code<=77) return ['snow','Snow'];
+      if(code<=82) return ['rain','Showers'];
+      if(code<=86) return ['snow','Snow showers'];
+      return ['storm','Thunderstorm'];
+    }
+    function temps(c){
+      var f=Math.round(c*9/5+32), cc=Math.round(c);
+      return UNITS==='f'?f+'°F':UNITS==='c'?cc+'°C':f+'°F / '+cc+'°C';
+    }
+    function svg(k){ var s=document.createElementNS('http://www.w3.org/2000/svg','svg'); s.setAttribute('viewBox','0 0 24 24'); s.innerHTML=G[k]||G.cloud; return s; }
+
+    function mkSet(){
+      var set=el('div','tk-set');
+      (wx||[]).forEach(function(w){
+        var c=cond(w.code,w.day), it=el('span','tk-item'+(w.day?'':' night'));
+        it.appendChild(el('span','tk-city',w.city)); it.appendChild(svg(c[0]));
+        it.appendChild(el('span','tk-temp',temps(w.temp))); it.appendChild(el('span','tk-cond',c[1]));
+        set.appendChild(it); set.appendChild(el('i','tk-dot'));
+      });
+      if(news&&news.length){
+        set.appendChild(el('b','tk-head','EVE News'));
+        news.forEach(function(n){
+          var it=el('span','tk-item');
+          it.appendChild(el('span','tk-kind '+(n.kind==='patch'?'patch':''), n.kind==='patch'?'Patch':n.kind==='show'?'Next on TEL':'News'));
+          it.appendChild(document.createTextNode(n.text));
+          set.appendChild(it); set.appendChild(el('i','tk-dot'));
+        });
+      }
+      return set;
+    }
+    function build(){
+      var key=JSON.stringify([wx,news]);
+      if(key===sig) return; sig=key;                 // same data: leave the scroll running
+      track.style.animation='none'; track.textContent='';
+      if(!wx&&!(news&&news.length)) return;
+      var first=mkSet(); track.appendChild(first);
+      var w=first.offsetWidth+1; first.style.width=w+'px';
+      var n=Math.ceil(win.clientWidth/w)+1;
+      for(var i=1;i<n;i++){ var c=mkSet(); c.style.width=w+'px'; track.appendChild(c); }
+      track.style.setProperty('--w',w+'px');
+      void track.offsetWidth;
+      track.style.animation='tkscroll '+(w/SPEED).toFixed(2)+'s linear infinite';
+    }
+    function loadWx(){
+      if(GUIDE){ wx=CITIES.map(function(c,i){return {city:c[0],temp:[14,3,8,11,12,-1,24,19][i],code:[0,71,3,61,2,45,1,95][i],day:i%3!==2};}); build(); return; }
+      fetch(WX_URL,{cache:'no-store'}).then(function(r){if(!r.ok) throw 0; return r.json();}).then(function(d){
+        var arr=Array.isArray(d)?d:[d];
+        var out=arr.map(function(x,i){var c=x&&x.current; if(!c||typeof c.temperature_2m!=='number') return null;
+          return {city:CITIES[i][0],temp:c.temperature_2m,code:c.weather_code,day:c.is_day!==0};}).filter(Boolean);
+        if(out.length){ wx=out; build(); }
+      }).catch(function(){ build(); });              // keep the last reading; first failure shows the news alone
+    }
+    function loadNews(){
+      if(!SHOW_NEWS){ build(); return; }
+      if(GUIDE){ news=[{kind:'patch',text:'Patch Notes - Version 23.02 - 2026-11-03'},{kind:'news',text:'Sample headline from the EVE news feed'},{kind:'show',text:'This EVE Life · Episode Name Goes Here'}]; build(); return; }
+      fetch('/api/public/news',{cache:'no-store'}).then(function(r){if(!r.ok) throw 0; return r.json();}).then(function(d){
+        news=(d&&Array.isArray(d.items)?d.items:[]).filter(function(n){return n&&n.text;}); build();
+      }).catch(function(){ build(); });
+    }
+    loadWx(); loadNews();
+    setInterval(loadWx,WX_MS); setInterval(loadNews,NEWS_MS);
+    if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ sig=null; build(); });   // re-measure once the fonts are in
+  })();
+</script>
+</body>
+</html>
