@@ -8,23 +8,23 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800;900&family=Rajdhani:wght@600;700&family=Share+Tech+Mono&display=swap">
 <style>
-  /* OBS Browser Source: 1920 x 1080, fully transparent except three pieces. EVE's Weather Channel (added 2026-11-03).
+  /* OBS Browser Source: 1920 x 1080, fully transparent except the scroll and the brand lockup. EVE's Weather Channel
+     (added 2026-11-03; the stream panel came out the same day at Chris's word, its content moved into the scroll).
      EVE game capture goes BELOW this source, full screen. No camera, no host plate.
 
-       Weather scroll   bottom, where the Now Playing bar sits on Gameplay: x 180, y 893, 1560 x 52.
-                        Eight cities (San Francisco, Chicago, New York, London, Paris, Reykjavík, Hong Kong, Sydney) with
-                        the current condition and temperature from Open-Meteo (free, no key; the page fetches it
-                        every 10 minutes), then the EVE news from /api/public/news (patch notes, then CCP news, then
-                        the next This EVE Life show; the Meta Show ticker reads the same list; every 2 minutes).
-       Stream panel     upper right under the brand lockup: x 1240, y 116, 640 wide (to y 464). Live Now / Next Show from the
-                        Discord calendar (the timing rule of the camera scenes), then the YouTube, Spotify and
-                        Discord addresses.
+       Weather scroll   bottom, where the Now Playing bar sits on Gameplay: x 180, y 893, 1560 x 52. One loop:
+                        1. eight cities (San Francisco, Chicago, New York, London, Paris, Reykjavík, Hong Kong, Sydney) with
+                           the current condition and temperature from Open-Meteo (free, no key; fetched every 10 minutes);
+                        2. EVE NEWS: the items from /api/public/news (patch notes, then CCP news; the Meta Show ticker reads
+                           the same list; every 2 minutes);
+                        3. UP NEXT: the next 3 This EVE Life shows from the Discord calendar (own channel, placeholders
+                           skipped, EVE time), the show on now first when there is one;
+                        4. the YouTube, Spotify and Discord addresses; then back to the weather.
        Music            the Now Playing bar is NOT on this page: pc/weather-nowplaying.html (a local file on the
                         stream PC) sits top left, x 60, y 56, 760 x 44, as its own Browser Source above this one.
 
-     Options: ?units=f|c|both (default both)   ?speed=55 (pixels per second)   ?news=0 (weather only)
-              ?ticker=0 (no scroll)   ?panel=0 (no stream panel)   ?title=Text (panel show name)
-              ?auto=0 (no calendar: the panel shows only ?title= and the addresses)   ?guide=1 (sample data, no fetch)
+     Options: ?units=f|c|both (default both)   ?speed=55 (pixels per second)   ?news=0 (no EVE news)
+              ?upnext=0 (no shows)   ?ticker=0 (no scroll)   ?auto=0 (no calendar, same as upnext=0)   ?guide=1 (sample data, no fetch)
               ?src=manual (TEL-Manual: manual.json next to this page for the shows; news is skipped, the weather still loads)
               ?now=2026-11-03T20:30Z (test clock for the calendar) */
   :root{
@@ -34,7 +34,7 @@
     --display:'Orbitron',system-ui,sans-serif;
     --body:'Rajdhani',system-ui,sans-serif;
     --mono:'Share Tech Mono',ui-monospace,monospace;
-    --ch:14px; --colL:1240px; --colW:640px;
+    --ch:14px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{width:1920px;height:1080px;overflow:hidden;background:transparent}
@@ -46,24 +46,6 @@
   .brand-in{display:flex;align-items:center;gap:14px;padding:10px 22px 10px 12px;background:#03060ecc;border:1px solid var(--edge);border-radius:999px}
   .wordmark{font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:.14em;color:var(--text-hi)}
   .wordmark span{color:var(--pink)}
-
-  /* stream panel */
-  .panel{position:absolute;left:var(--colL);top:116px;width:var(--colW);padding:22px 30px 24px;
-    background:linear-gradient(180deg,#101a32f2,#060b1af5);border:1px solid var(--edge);display:flex;flex-direction:column;gap:16px}
-  .panel::before{content:"";position:absolute;left:0;top:24px;bottom:24px;width:5px;background:var(--cyan);box-shadow:0 0 18px #35d6ffaa}
-  .nopanel .panel{display:none}
-  .pl-label{font-family:var(--mono);font-size:26px;letter-spacing:.24em;text-transform:uppercase;color:var(--pink);line-height:1}
-  .pl-name{font-family:var(--display);font-weight:800;font-size:30px;line-height:1.2;color:var(--text-hi);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-  .pl-when{font-family:var(--mono);font-size:26px;letter-spacing:.08em;color:var(--cyan);line-height:1}
-  .show{display:none;flex-direction:column;gap:10px}
-  .show.on{display:flex}
-  .rule{height:1px;background:linear-gradient(90deg,var(--pink),var(--blue));opacity:.7}
-  .links{display:flex;flex-direction:column;gap:10px}
-  .link{display:flex;align-items:center;gap:14px;font-family:var(--mono);font-size:26px;letter-spacing:.04em;color:var(--text-mid);white-space:nowrap}
-  .tag{flex:none;font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.16em;padding:2px 10px;border:1px solid var(--blue);color:var(--cyan);background:#1470e920;min-width:148px;text-align:center}
-  .tag.yt{border-color:#ff3030;color:#ff8080;background:#ff30301c}
-  .tag.sp{border-color:#1db954;color:#7be8a0;background:#1db95420}
-  .tag.dc{border-color:#5865f2;color:#a9b0ff;background:#5865f21f}
 
   /* weather scroll: the Now Playing bar's spot on Gameplay */
   .ticker{position:absolute;left:180px;top:893px;width:1560px;height:52px;display:flex;align-items:center;
@@ -87,6 +69,11 @@
   .tk-head{flex:none;font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:.2em;padding:2px 12px;margin:0 6px 0 10px;border:1px solid var(--pink);color:var(--pink);background:#f22dc81f}
   .tk-kind{font-family:var(--mono);font-size:26px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan)}
   .tk-kind.patch{color:var(--pink)}
+  .tk-when{font-family:var(--mono);font-size:26px;letter-spacing:.08em;color:var(--cyan)}
+  .tk-tag{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.16em;padding:0 10px;border:1px solid var(--blue);color:var(--cyan);background:#1470e920}
+  .tk-tag.yt{border-color:#ff3030;color:#ff8080;background:#ff30301c}
+  .tk-tag.sp{border-color:#1db954;color:#7be8a0;background:#1db95420}
+  .tk-tag.dc{border-color:#5865f2;color:#a9b0ff;background:#5865f21f}
   @keyframes tkscroll{to{transform:translateX(calc(-1 * var(--w)))}}
   @media(prefers-reduced-motion:reduce){.tk-track{animation:none!important}}
 </style>
@@ -94,20 +81,6 @@
 <body>
 <div class="stage" id="stage">
   <div class="brand"><div class="brand-in"><div class="wordmark">THIS <span>EVE</span> LIFE</div></div></div>
-
-  <div class="panel chamfer" id="panel">
-    <div class="show" id="show">
-      <div class="pl-label" id="plLabel">Live Now</div>
-      <div class="pl-name" id="plName"></div>
-      <div class="pl-when" id="plWhen"></div>
-      <div class="rule"></div>
-    </div>
-    <div class="links">
-      <div class="link"><b class="tag yt">YOUTUBE</b>youtube.com/@CeemaGPT</div>
-      <div class="link"><b class="tag sp">SPOTIFY</b>spotify.thisevelife.space</div>
-      <div class="link"><b class="tag dc">DISCORD</b>discord.thisevelife.space</div>
-    </div>
-  </div>
 
   <div class="ticker" id="ticker"><div class="tk-label">EVE Weather</div><div class="tk-win" id="tkWin"><div class="tk-track" id="tkTrack"></div></div></div>
 </div>
@@ -117,9 +90,8 @@
   var MANUAL=q.get('src')==='manual', GUIDE=q.get('guide')==='1', auto=q.get('auto')!=='0';
   var UNITS=(q.get('units')||'both').toLowerCase(); if(UNITS!=='f'&&UNITS!=='c') UNITS='both';
   var SPEED=Math.max(10,Math.min(300,parseFloat(q.get('speed'))||55));
-  var SHOW_NEWS=q.get('news')!=='0'&&!MANUAL, TITLE=q.get('title');
+  var SHOW_NEWS=q.get('news')!=='0'&&!MANUAL, SHOW_NEXT=q.get('upnext')!=='0'&&auto;
   if(q.get('ticker')==='0') document.body.classList.add('noticker');
-  if(q.get('panel')==='0') document.body.classList.add('nopanel');
   function fit(){
     var s=Math.min(innerWidth/1920,innerHeight/1080), st=document.getElementById('stage');
     st.style.transform = Math.abs(s-1)>.001 ? 'scale('+s+')' : '';
@@ -152,39 +124,29 @@
   function p2(n){return n<10?'0'+n:''+n;}
   function whenOf(ms){var d=new Date(ms); return DOW[d.getUTCDay()]+' '+(d.getUTCMonth()+1)+'/'+d.getUTCDate()+' · '+p2(d.getUTCHours())+':'+p2(d.getUTCMinutes())+' EVE';}
 
-  /* ---------- stream panel: Live Now / Next Show, then the addresses ---------- */
-  (function(){
-    var box=document.getElementById('show'), nameEl=document.getElementById('plName'), whenEl=document.getElementById('plWhen'), labEl=document.getElementById('plLabel');
-    var SCHED=MANUAL?['manual.json']:['/api/public/schedule','/api/public/feed'], REFRESH=2*60*1000;
-    function set(name,when,lbl){
-      if(!name){ box.classList.remove('on'); return; }
-      labEl.textContent=lbl; nameEl.textContent=name; whenEl.textContent=when||''; box.classList.add('on');
-    }
-    function apply(list){
-      var now=nowMs();
-      var xs=(list||[]).filter(function(s){return !SKIP_RE.test(s.name||'')&&s.ownChannel!==false;})
-        .map(function(s){var at=Date.parse(s.at);return {s:s,at:at,end:s.endAt?Date.parse(s.endAt):at+3*3600e3};})
-        .filter(function(x){return !isNaN(x.at);}).sort(function(a,b){return a.at-b.at;});
-      var p=pickShow(xs,now);
-      if(!p){ set(TITLE||'', '', 'Live Now'); return; }
-      var live=p.state!=='next'||p.x.at-now<=LEAD_MS;
-      set(TITLE||String(p.x.s.name||'').trim(), live?'':whenOf(p.x.at), live?'Live Now':'Next Show');
-    }
-    function get(cb){
-      var i=0;
-      (function nx(){
-        if(i>=SCHED.length){cb(null);return;}
-        fetch(SCHED[i++],{cache:'no-store'}).then(function(r){if(!r.ok) throw 0; return r.json();})
-          .then(function(d){cb(d.shows||d.nextShows||[]);}).catch(nx);
-      })();
-    }
-    function go(){
-      if(GUIDE){ set('This EVE Life · Episode Name Goes Here', whenOf(nowMs()+26*3600e3), 'Next Show'); return; }
-      if(!auto){ set(TITLE||'', '', 'Live Now'); return; }
-      get(function(list){ if(list) apply(list); else if(TITLE) set(TITLE,'','Live Now'); });
-    }
-    go(); setInterval(go,REFRESH);
-  })();
+  /* ---------- the next 3 shows (for the scroll) ---------- */
+  var LINKS=[['yt','YOUTUBE','youtube.com/@CeemaGPT'],['sp','SPOTIFY','spotify.thisevelife.space'],['dc','DISCORD','discord.thisevelife.space']];
+  var shows=null;   // [{at,name,live}] newest first: the show on now (if any), then the next ones, 3 in all
+  function nextShows(list){
+    var now=nowMs();
+    var xs=(list||[]).filter(function(s){return !SKIP_RE.test(s.name||'')&&s.ownChannel!==false;})
+      .map(function(s){var at=Date.parse(s.at);return {name:String(s.name||'').trim(),at:at,end:s.endAt?Date.parse(s.endAt):at+3*3600e3};})
+      .filter(function(x){return x.name&&!isNaN(x.at);}).sort(function(a,b){return a.at-b.at;});
+    var p=pickShow(xs,now), out=[];
+    if(p&&p.state!=='next') out.push({name:p.x.name,at:p.x.at,live:true});
+    xs.forEach(function(x){ if(x.at>now&&out.length<3) out.push({name:x.name,at:x.at,live:false}); });
+    return out;
+  }
+  function loadShows(cb){
+    var SCHED=MANUAL?['manual.json']:['/api/public/schedule','/api/public/feed'], i=0;
+    if(!SHOW_NEXT){ cb(); return; }
+    if(GUIDE){ shows=[{name:'This EVE Life · Episode Name Goes Here',at:nowMs()+26*3600e3,live:false},{name:'Office Hours EP 6',at:nowMs()+3*86400e3,live:false},{name:'Special #14 · Guest Name',at:nowMs()+5*86400e3,live:false}]; cb(); return; }
+    (function nx(){
+      if(i>=SCHED.length){ cb(); return; }     // calendar down: keep the last list
+      fetch(SCHED[i++],{cache:'no-store'}).then(function(r){if(!r.ok) throw 0; return r.json();})
+        .then(function(d){ shows=nextShows(d.shows||d.nextShows||[]); cb(); }).catch(nx);
+    })();
+  }
 
   /* ---------- weather scroll ---------- */
   (function(){
@@ -238,18 +200,30 @@
         set.appendChild(el('b','tk-head','EVE News'));
         news.forEach(function(n){
           var it=el('span','tk-item');
-          it.appendChild(el('span','tk-kind '+(n.kind==='patch'?'patch':''), n.kind==='patch'?'Patch':n.kind==='show'?'Next on TEL':'News'));
+          it.appendChild(el('span','tk-kind '+(n.kind==='patch'?'patch':''), n.kind==='patch'?'Patch':'News'));
           it.appendChild(document.createTextNode(n.text));
           set.appendChild(it); set.appendChild(el('i','tk-dot'));
         });
       }
+      if(shows&&shows.length){
+        set.appendChild(el('b','tk-head','Up Next'));
+        shows.forEach(function(e){
+          var it=el('span','tk-item');
+          it.appendChild(el('b','tk-when',e.live?'LIVE NOW':whenOf(e.at))); it.appendChild(document.createTextNode(e.name));
+          set.appendChild(it); set.appendChild(el('i','tk-dot'));
+        });
+      }
+      LINKS.forEach(function(l){
+        var it=el('span','tk-item'); it.appendChild(el('b','tk-tag '+l[0],l[1])); it.appendChild(document.createTextNode(l[2]));
+        set.appendChild(it); set.appendChild(el('i','tk-dot'));
+      });
       return set;
     }
     function build(){
-      var key=JSON.stringify([wx,news]);
+      var key=JSON.stringify([wx,news,shows]);
       if(key===sig) return; sig=key;                 // same data: leave the scroll running
       track.style.animation='none'; track.textContent='';
-      if(!wx&&!(news&&news.length)) return;
+      
       var first=mkSet(); track.appendChild(first);
       var w=first.offsetWidth+1; first.style.width=w+'px';
       var n=Math.ceil(win.clientWidth/w)+1;
@@ -269,13 +243,13 @@
     }
     function loadNews(){
       if(!SHOW_NEWS){ build(); return; }
-      if(GUIDE){ news=[{kind:'patch',text:'Patch Notes - Version 23.02 - 2026-11-03'},{kind:'news',text:'Sample headline from the EVE news feed'},{kind:'show',text:'This EVE Life · Episode Name Goes Here'}]; build(); return; }
+      if(GUIDE){ news=[{kind:'patch',text:'Patch Notes - Version 23.02 - 2026-11-03'},{kind:'news',text:'Sample headline from the EVE news feed'}]; build(); return; }
       fetch('/api/public/news',{cache:'no-store'}).then(function(r){if(!r.ok) throw 0; return r.json();}).then(function(d){
-        news=(d&&Array.isArray(d.items)?d.items:[]).filter(function(n){return n&&n.text;}); build();
+        news=(d&&Array.isArray(d.items)?d.items:[]).filter(function(n){return n&&n.text&&n.kind!=='show';}); build();
       }).catch(function(){ build(); });
     }
-    loadWx(); loadNews();
-    setInterval(loadWx,WX_MS); setInterval(loadNews,NEWS_MS);
+    loadWx(); loadNews(); loadShows(build);
+    setInterval(loadWx,WX_MS); setInterval(loadNews,NEWS_MS); setInterval(function(){loadShows(build);},NEWS_MS);
     if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ sig=null; build(); });   // re-measure once the fonts are in
   })();
 </script>
