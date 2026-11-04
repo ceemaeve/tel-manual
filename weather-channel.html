@@ -23,11 +23,12 @@
        Scroll        y 1022 to 1080: the weather scroll from weather.html (eight cities, EVE NEWS, UP NEXT, the addresses).
 
      Scenes (?scene=):  conditions (default)  outlook  hot  forecast  headlines  station
-     Data: every source is pulled ONCE, when the first card page opens, and the reading is shared by all six scenes for the
-     evening (12 hours, localStorage): Open-Meteo (one request for the eight cities), ESI (status, system_kills, system_jumps,
-     names), /api/public/news, the calendar, and /api/weather (the lines Chris types on the Ceema Plays desk; its copy is
-     good for 20 s, so right-click > Refresh on a card source picks up a new push). Nothing polls (Chris, 2026-11-03: as low
-     maintenance as possible, pull once). ?poll=1 brings the timed polling back (weather and ESI every 10 min, site every
+     Data: each source is pulled when the first card page opens and the reading is shared by all six scenes (localStorage).
+     Weather (Open-Meteo, one request for the eight cities) and ESI (status, system_kills, system_jumps, names) are pulled
+     again every hour while a card page is open (Chris, 2026-11-03: hot systems and weather every hour, not
+     the forecast and headlines). /api/public/news, the calendar and the patch dates are pulled once for the evening
+     (12 hours). /api/weather (the lines Chris types on the Ceema Plays desk) has a 20 s copy, so right-click > Refresh on
+     a card source picks up a new push. ?poll=1 brings the old fast polling back (weather and ESI every 10 min, site every
      2 min, desk every 20 s). The last reading stays up when a pull fails.
 
      Options: ?units=f|c|both   ?speed=55 (scroll, px/s)   ?ticker=0   ?local=0   ?news=0   ?upnext=0   ?auto=0 (no calendar)   ?poll=1
@@ -241,8 +242,8 @@
               ['Paris',48.86,2.35],['Reykjavík',64.15,-21.94],['Hong Kong',22.32,114.17],['Sydney',-33.87,151.21]];
   var WX_URL='https://api.open-meteo.com/v1/forecast?latitude='+CITIES.map(function(c){return c[1];}).join(',')
     +'&longitude='+CITIES.map(function(c){return c[2];}).join(',')+'&current=temperature_2m,weather_code,is_day&timezone=auto';
-  var POLL=q.get('poll')==='1', DAY_MS=12*3600*1000;
-  var WX_MS=POLL?10*60*1000:DAY_MS, SITE_MS=POLL?2*60*1000:DAY_MS, DESK_MS=20*1000;
+  var POLL=q.get('poll')==='1', DAY_MS=12*3600*1000, LIVE_MS=60*60*1000, RECHECK_MS=5*60*1000;
+  var WX_MS=POLL?10*60*1000:LIVE_MS, SITE_MS=POLL?2*60*1000:DAY_MS, DESK_MS=20*1000;
   var wx=null, news=null, shows=null, desk={}, esi=null;
 
   /* The six card pages share one browser profile in OBS, so a reading one page fetched serves the others:
@@ -252,6 +253,10 @@
   function cget(k,maxAge){ try{ var v=JSON.parse(localStorage.getItem(CK+k)||'null'); return v&&(Date.now()-v.t)<maxAge?v.d:null; }catch(e){ return null; } }
   function cput(k,d){ try{ localStorage.setItem(CK+k,JSON.stringify({t:Date.now(),d:d})); }catch(e){} }
   function cany(k){ try{ var v=JSON.parse(localStorage.getItem(CK+k)||'null'); return v?v.d:null; }catch(e){ return null; } }
+  function claim(k){                                     // true for the one page that fetches; the others wait for its reading
+    try{ var t=+localStorage.getItem(CK+k+'.lock')||0; if(Date.now()-t<30000) return false; localStorage.setItem(CK+k+'.lock',String(Date.now())); }catch(e){}
+    return true;
+  }
   if(!GUIDE){ wx=cany('wx'); news=cany('news'); shows=cany('shows'); esi=cany('esi'); var d0=cany('desk'); if(d0&&typeof d0==='object') desk=d0; }
 
   // WMO weather codes -> [glyph, words]. Open-Meteo documents the codes on its forecast API page.
@@ -302,6 +307,7 @@
     if(GUIDE){ wx=CITIES.map(function(c,i){return {city:c[0],temp:[14,3,8,11,12,-1,24,19][i],code:[0,71,3,61,2,45,1,95][i],day:i%3!==2};});
       if(CASE==='sevencities') wx=wx.slice(0,7); update(); return; }
     var c=cget('wx',WX_MS-5000); if(c){ wx=c; update(); return; }
+    if(!claim('wx')){ update(); return; }
     fetch(WX_URL,{cache:'no-store'}).then(function(r){if(!r.ok) throw 0; return r.json();}).then(function(d){
       var out=mapWx(d); if(out.length){ wx=out; wx.at=nowMs(); cput('wx',wx); } update();
     }).catch(update);                                    // keep the last reading
@@ -405,6 +411,7 @@
 
   loadWx(); loadNews(); loadShows(); loadDesk();
   if(POLL) setTimeout(function(){ setInterval(loadWx,WX_MS); setInterval(loadNews,SITE_MS); setInterval(loadShows,SITE_MS); setInterval(loadDesk,DESK_MS); },JIT);
+  else setTimeout(function(){ setInterval(loadWx,RECHECK_MS); },JIT);   // every 5 min: takes the shared reading, fetches only once it is an hour old
   if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ tkSig=null; cardSig=null; update(); });   // re-measure once the fonts are in
 
   /* ---------- Task 5 cards: conditions, headlines, forecast, station ---------- */
@@ -466,7 +473,7 @@
   cardSig=null; render();
 
   /* ---------- Task 6: ESI (CCP's public API, no key) and the two cards that read it ---------- */
-  var ESI='https://esi.evetech.net/latest', ESI_MS=POLL?10*60*1000:DAY_MS;
+  var ESI='https://esi.evetech.net/latest', ESI_MS=POLL?10*60*1000:LIVE_MS;
   function esiGet(path){ return fetch(ESI+path+'?datasource=tranquility',{cache:'no-store'}).then(function(r){ if(!r.ok) throw 0; return r.json(); }); }
   function namesFor(ids){                                // POST names; fall back to one GET per system
     return fetch(ESI+'/universe/names/?datasource=tranquility',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(ids)})
@@ -483,6 +490,7 @@
       update(); return;
     }
     var c=cget('esi',ESI_MS-5000); if(c){ esi=c; update(); return; }
+    if(!claim('esi')){ update(); return; }
     Promise.all([esiGet('/status/'),esiGet('/universe/system_kills/'),esiGet('/universe/system_jumps/')]).then(function(res){
       var st=res[0]||{}, kills=(res[1]||[]).filter(function(k){return k&&typeof k.ship_kills==='number';}).sort(function(a,b){return b.ship_kills-a.ship_kills;}).slice(0,5);
       var jumps={}; (res[2]||[]).forEach(function(j){ if(j&&j.system_id) jumps[j.system_id]=j.ship_jumps; });
@@ -537,7 +545,7 @@
   if(GUIDE&&CASE==='esidown'){ desk={}; DESK=false; }
   if(GUIDE&&CASE==='typedonly'){ desk={hot1:{title:'Jita',sub:'Heavy scams, 90% chance of gank'}}; DESK=false; }
   if(GUIDE&&CASE==='long'){ var L=new Array(21).join('Long line '); desk.outlook={title:L,sub:''}; desk.hot1={title:'Jita',sub:L}; DESK=false; }
-  loadEsi(); if(POLL) setInterval(loadEsi,ESI_MS);
+  loadEsi(); if(POLL) setInterval(loadEsi,ESI_MS); else setTimeout(function(){ setInterval(loadEsi,RECHECK_MS); },JIT);
   /*CARD-JS*/
 </script>
 </body>
