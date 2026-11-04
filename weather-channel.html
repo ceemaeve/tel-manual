@@ -23,11 +23,14 @@
        Scroll        y 1022 to 1080: the weather scroll from weather.html (eight cities, EVE NEWS, UP NEXT, the addresses).
 
      Scenes (?scene=):  conditions (default)  outlook  hot  forecast  headlines  station
-     Data, only while a card is open in OBS: Open-Meteo every 10 min (one request for the eight cities); ESI every 10 min
-     (status, system_kills, system_jumps, names); /api/public/news and the calendar every 2 min; /api/weather (the lines
-     Chris types on the Ceema Plays desk) every 20 s. The last reading stays up when a pull fails.
+     Data: every source is pulled ONCE, when the first card page opens, and the reading is shared by all six scenes for the
+     evening (12 hours, localStorage): Open-Meteo (one request for the eight cities), ESI (status, system_kills, system_jumps,
+     names), /api/public/news, the calendar, and /api/weather (the lines Chris types on the Ceema Plays desk; its copy is
+     good for 20 s, so right-click > Refresh on a card source picks up a new push). Nothing polls (Chris, 2026-11-03: as low
+     maintenance as possible, pull once). ?poll=1 brings the timed polling back (weather and ESI every 10 min, site every
+     2 min, desk every 20 s). The last reading stays up when a pull fails.
 
-     Options: ?units=f|c|both   ?speed=55 (scroll, px/s)   ?ticker=0   ?local=0   ?news=0   ?upnext=0   ?auto=0 (no calendar)
+     Options: ?units=f|c|both   ?speed=55 (scroll, px/s)   ?ticker=0   ?local=0   ?news=0   ?upnext=0   ?auto=0 (no calendar)   ?poll=1
               ?desk=0 (ignore the typed lines)   ?guide=1 (sample data, no outside request; ?case= picks a test case)
               ?src=manual (TEL-Manual: shows from manual.json beside the page; news skipped; weather and ESI still load)
               ?now=2026-11-03T20:30Z (test clock) */
@@ -238,7 +241,8 @@
               ['Paris',48.86,2.35],['Reykjavík',64.15,-21.94],['Hong Kong',22.32,114.17],['Sydney',-33.87,151.21]];
   var WX_URL='https://api.open-meteo.com/v1/forecast?latitude='+CITIES.map(function(c){return c[1];}).join(',')
     +'&longitude='+CITIES.map(function(c){return c[2];}).join(',')+'&current=temperature_2m,weather_code,is_day&timezone=auto';
-  var WX_MS=10*60*1000, SITE_MS=2*60*1000, DESK_MS=20*1000;
+  var POLL=q.get('poll')==='1', DAY_MS=12*3600*1000;
+  var WX_MS=POLL?10*60*1000:DAY_MS, SITE_MS=POLL?2*60*1000:DAY_MS, DESK_MS=20*1000;
   var wx=null, news=null, shows=null, desk={}, esi=null;
 
   /* The six card pages share one browser profile in OBS, so a reading one page fetched serves the others:
@@ -299,12 +303,12 @@
       if(CASE==='sevencities') wx=wx.slice(0,7); update(); return; }
     var c=cget('wx',WX_MS-5000); if(c){ wx=c; update(); return; }
     fetch(WX_URL,{cache:'no-store'}).then(function(r){if(!r.ok) throw 0; return r.json();}).then(function(d){
-      var out=mapWx(d); if(out.length){ wx=out; cput('wx',wx); } update();
+      var out=mapWx(d); if(out.length){ wx=out; wx.at=nowMs(); cput('wx',wx); } update();
     }).catch(update);                                    // keep the last reading
   }
   function loadNews(){
     if(!SHOW_NEWS){ update(); return; }
-    if(GUIDE){ news=[{kind:'patch',text:'Patch Notes - Version 23.02 - 2026-11-03'},{kind:'news',text:'Sample headline from the EVE news feed'},
+    if(GUIDE){ news=[{kind:'patch',text:'Patch Notes - Version 23.02 - 2026-11-03',at:new Date(nowMs()-86400e3).toISOString()},{kind:'news',text:'Sample headline from the EVE news feed'},
       {kind:'news',text:'Another headline, this one long enough to show how a wide line is cut off at the edge of the card'}]; update(); return; }
     var c=cget('news',SITE_MS-5000); if(c){ news=c; update(); return; }
     fetch('/api/public/news',{cache:'no-store'}).then(function(r){if(!r.ok) throw 0; return r.json();}).then(function(d){
@@ -387,6 +391,7 @@
   var TITLES={conditions:'Current Conditions',outlook:'New Eden Outlook',hot:'Hot Systems',forecast:'Extended Forecast',headlines:'Headlines',station:'Station ID'};
   var RENDER={};
   function title(sub){ var t=el('div','ct',TITLES[SCENE]); if(sub) t.appendChild(el('small',null,sub)); return t; }
+  function asOf(ms){ var d=new Date(ms); return 'as of '+p2(d.getUTCHours())+':'+p2(d.getUTCMinutes())+' EVE'; }
   function stub(card){ card.appendChild(title()); card.appendChild(el('div','cbody')); }
   SCENES.forEach(function(s){ RENDER[s]=stub; });
   var cardSig=null;
@@ -399,7 +404,7 @@
   function update(){ buildTicker(); render(); }
 
   loadWx(); loadNews(); loadShows(); loadDesk();
-  setTimeout(function(){ setInterval(loadWx,WX_MS); setInterval(loadNews,SITE_MS); setInterval(loadShows,SITE_MS); setInterval(loadDesk,DESK_MS); },JIT);
+  if(POLL) setTimeout(function(){ setInterval(loadWx,WX_MS); setInterval(loadNews,SITE_MS); setInterval(loadShows,SITE_MS); setInterval(loadDesk,DESK_MS); },JIT);
   if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ tkSig=null; cardSig=null; update(); });   // re-measure once the fonts are in
 
   /* ---------- Task 5 cards: conditions, headlines, forecast, station ---------- */
@@ -434,10 +439,14 @@
     if(!list.length) lr.appendChild(el('div','empty',SHOW_NEXT?'No shows on the calendar':'Calendar off'));
     list.forEach(function(e){ var r=el('div','row'); r.appendChild(el('span','when'+(e.live?' live':''),e.live?'LIVE NOW':whenOf(e.at))); r.appendChild(el('span','txt',e.name)); lr.appendChild(r); });
     right.appendChild(el('div','colh','New Eden Calendar'));
-    var rr=el('div','rows'), any=false; right.appendChild(rr);
-    ['fc1','fc2','fc3','fc4','fc5'].forEach(function(k){ var v=deskLine(k); if(!v.title) return; any=true;
-      var r=el('div','row'); r.appendChild(el('span','day',v.title)); r.appendChild(el('span','ev',v.sub||'')); rr.appendChild(r); });
-    if(!any) rr.appendChild(el('div','empty','Nothing on the books'));
+    var rr=el('div','rows'), lines=[]; right.appendChild(rr);
+    ['fc1','fc2','fc3','fc4','fc5'].forEach(function(k){ var v=deskLine(k); if(v.title) lines.push([v.title,v.sub||'']); });
+    if(!lines.length){                                   // nothing typed: CCP's dated patch items, newest first, then the standing line
+      (news||[]).filter(function(n){return n.kind==='patch'&&n.at;}).slice(0,4).forEach(function(n){
+        var d=new Date(n.at); lines.push([DOW[d.getUTCDay()]+' '+(d.getUTCMonth()+1)+'/'+d.getUTCDate(), n.text.replace(/^Patch Notes\s*[-–:]\s*/i,'Patch: ')]); });
+      lines.push(['Daily','Downtime 11:00 EVE, about 15 minutes']);
+    }
+    lines.slice(0,5).forEach(function(l){ var r=el('div','row'); r.appendChild(el('span','day',l[0])); r.appendChild(el('span','ev',l[1])); rr.appendChild(r); });
   };
   RENDER.station=function(card){
     var st=el('div','station'); card.appendChild(st);
@@ -457,7 +466,7 @@
   cardSig=null; render();
 
   /* ---------- Task 6: ESI (CCP's public API, no key) and the two cards that read it ---------- */
-  var ESI='https://esi.evetech.net/latest', ESI_MS=10*60*1000;
+  var ESI='https://esi.evetech.net/latest', ESI_MS=POLL?10*60*1000:DAY_MS;
   function esiGet(path){ return fetch(ESI+path+'?datasource=tranquility',{cache:'no-store'}).then(function(r){ if(!r.ok) throw 0; return r.json(); }); }
   function namesFor(ids){                                // POST names; fall back to one GET per system
     return fetch(ESI+'/universe/names/?datasource=tranquility',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(ids)})
@@ -469,7 +478,7 @@
   function loadEsi(){
     if(GUIDE){
       if(CASE==='esidown'||CASE==='typedonly'){ esi=null; update(); return; }
-      esi={players:24318,vip:false,at:nowMs(),kills:[['Jita',61,120,2400],['Tama',44,30,310],['Amamake',37,41,280],['Uedama',29,12,900],['1DQ1-A',22,9,410]]
+      esi={players:24318,vip:false,at:nowMs()-7*60000,kills:[['Jita',61,120,2400],['Tama',44,30,310],['Amamake',37,41,280],['Uedama',29,12,900],['1DQ1-A',22,9,410]]
         .map(function(r){return {name:r[0],ship:r[1],pod:r[2],jumps:r[3]};})};
       update(); return;
     }
@@ -487,7 +496,7 @@
   }
   function fmt(n){ return n==null?'—':String(n).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
   RENDER.outlook=function(card){
-    card.appendChild(title(esi?'Tranquility':'Waiting for ESI'));
+    card.appendChild(title(esi?asOf(esi.at):'Waiting for ESI'));
     var body=el('div','cbody'); card.appendChild(body);
     var stats=el('div','stats'); body.appendChild(stats);
     function stat(lab,val,cls){ var d=el('div','stat'); d.appendChild(el('div','lab',lab)); d.appendChild(el('div','val'+(cls?' '+cls:''),val)); stats.appendChild(d); }
@@ -500,11 +509,17 @@
     var nx=(shows||[])[0];
     if(nx){ var row=el('div','nexton'); row.appendChild(el('span','lab','Next on This EVE Life')); row.appendChild(el('span','when',nx.live?'LIVE NOW':whenOf(nx.at))); row.appendChild(el('span','nm',nx.name)); body.appendChild(row); }
   };
+  var HOUSE_LINES={jita:'Heavy scams with a chance of gank',amamake:'Scattered frigates, gusting to cruisers',tama:'Gate camps until further notice',
+    uedama:'Freighter showers on the gate, bring an umbrella',rancer:'Smartbomb warnings in effect',niarja:'Clear since the trig weather moved in',
+    '1dq1-a':'Partly cloudy with Rorquals',hek:'Mild, with a chance of market PvP',dodixie:'Mostly haulers',rens:'Light trade winds',
+    'd-pnp9':'Seasonal fog over the keepstar',thera:'Wormhole weather, variable',perimeter:'Overcast, scam fronts drifting in from Jita',
+    'old man star':'Local on the 8s, every 8 minutes a new fight',ahbazon:'Bubble storms on the lowsec gate'};
+  function houseLine(name){ return HOUSE_LINES[String(name||'').toLowerCase()]||''; }
   RENDER.hot=function(card){
-    card.appendChild(title('Last hour · ESI'));
+    card.appendChild(title(esi?'The hour before '+asOf(esi.at).slice(6):'Last hour · ESI'));
     var body=el('div','cbody'), t=el('div','hot'); body.appendChild(t); card.appendChild(body);
     var typed=['hot1','hot2','hot3','hot4','hot5'].map(deskLine).filter(function(v){return v.title;});
-    var rows=(esi?esi.kills:[]).map(function(k){ var m=typed.filter(function(v){return v.title.toLowerCase()===k.name.toLowerCase();})[0]; return {name:k.name,ship:k.ship,pod:k.pod,jumps:k.jumps,line:m?m.sub:''}; });
+    var rows=(esi?esi.kills:[]).map(function(k){ var m=typed.filter(function(v){return v.title.toLowerCase()===k.name.toLowerCase();})[0]; return {name:k.name,ship:k.ship,pod:k.pod,jumps:k.jumps,line:m?m.sub:houseLine(k.name)}; });
     typed.forEach(function(v){ if(rows.length<7&&!rows.some(function(r){return r.name.toLowerCase()===v.title.toLowerCase();})) rows.push({name:v.title,ship:null,pod:null,jumps:null,line:v.sub}); });
     if(rows.length>5) t.classList.add('many');          // 5 live plus up to 2 typed quiet systems; rows share the height
     if(!rows.length){ t.appendChild(el('div','empty','No kill data yet')); return; }
@@ -518,10 +533,11 @@
   };
   if(GUIDE&&CASE==='typedquiet'){ desk={hot1:{title:'Jita',sub:'Heavy scams, 90% chance of gank'},hot2:{title:'Delve',sub:'Partly cloudy with Rorquals'}}; DESK=false; }   // neither is in the sample top 5: Jita is, Delve is not
   if(GUIDE&&CASE==='manylines'){ desk={hot1:{title:'Jita',sub:'line'},hot2:{title:'Tama',sub:'line'},hot3:{title:'Amamake',sub:'line'},hot4:{title:'Delve',sub:'line'},hot5:{title:'Thera',sub:'line'},fc1:{title:'Tuesday after downtime, the patch day for real',sub:'short'}}; DESK=false; }
+  if(GUIDE&&CASE==='nolines'){ desk={}; DESK=false; }
   if(GUIDE&&CASE==='esidown'){ desk={}; DESK=false; }
   if(GUIDE&&CASE==='typedonly'){ desk={hot1:{title:'Jita',sub:'Heavy scams, 90% chance of gank'}}; DESK=false; }
   if(GUIDE&&CASE==='long'){ var L=new Array(21).join('Long line '); desk.outlook={title:L,sub:''}; desk.hot1={title:'Jita',sub:L}; DESK=false; }
-  loadEsi(); setInterval(loadEsi,ESI_MS);
+  loadEsi(); if(POLL) setInterval(loadEsi,ESI_MS);
   /*CARD-JS*/
 </script>
 </body>
