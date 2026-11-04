@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>This EVE Weather Channel</title>
+<meta name="viewport" content="width=1920,height=1080">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800;900&family=Rajdhani:wght@600;700&family=Share+Tech+Mono&display=swap">
+<style>
+  /* OBS Browser Source: 1920 x 1080. This EVE Weather Channel, the TEL-Weather scene pack (added 2026-11-03): a silent
+     Twitch show in the style of the 1990s weather channel. Six data cards, one per OBS scene, picked with ?scene=;
+     Chris switches them from the Stream Deck. No camera, no presenter, no system name. Spec:
+     docs/superpowers/specs/2026-11-03-tel-weather-design.md. Setup: tel-weather/README.md.
+
+     Bands (every card keeps all four, so a switch moves nothing the viewer is reading):
+       Header        y 0 to 110, opaque: THIS EVE WEATHER CHANNEL right, the EVE-time clock centre, and the top-left corner
+                     kept clear for the music bar (pc/weather-nowplaying.html, a separate local Browser Source above this
+                     page: x 60, y 56, 760 x 44).
+       Card          y 110 to 760 (the plate at x 40, y 126, 1840 x 624).
+       Local strip   x 40, y 770, 1840 x 246: a hole with a frame and a LOCAL tab. The EVE client's Local chat window
+                     is a Window Capture UNDER this page, sized to the hole. ?local=0 hides the frame.
+       Scroll        y 1022 to 1080: the weather scroll from weather.html (eight cities, EVE NEWS, UP NEXT, the addresses).
+
+     Scenes (?scene=):  conditions (default)  outlook  hot  forecast  headlines  station
+     Data, only while a card is open in OBS: Open-Meteo every 10 min (one request for the eight cities); ESI every 10 min
+     (status, system_kills, system_jumps, names); /api/public/news and the calendar every 2 min; /api/weather (the lines
+     Chris types on the Ceema Plays desk) every 20 s. The last reading stays up when a pull fails.
+
+     Options: ?units=f|c|both   ?speed=55 (scroll, px/s)   ?ticker=0   ?local=0   ?news=0   ?upnext=0   ?auto=0 (no calendar)
+              ?desk=0 (ignore the typed lines)   ?guide=1 (sample data, no outside request; ?case= picks a test case)
+              ?src=manual (TEL-Manual: shows from manual.json beside the page; news skipped; weather and ESI still load)
+              ?now=2026-11-03T20:30Z (test clock) */
+  :root{
+    --void:#03060e; --edge:#1c2c4d;
+    --blue:#2e8bff; --cyan:#35d6ff; --magenta:#f22dc8; --pink:#ff5cc8; --amber:#FF8A3D;
+    --text-hi:#fff; --text-mid:#c9d6ee; --text-dim:#8b98b8;
+    --display:'Orbitron',system-ui,sans-serif;
+    --body:'Rajdhani',system-ui,sans-serif;
+    --mono:'Share Tech Mono',ui-monospace,monospace;
+    --ch:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:1920px;height:1080px;overflow:hidden;background:transparent}
+  .stage{position:relative;width:1920px;height:1080px;transform-origin:0 0}
+  .chamfer{clip-path:polygon(var(--ch) 0,100% 0,100% calc(100% - var(--ch)),calc(100% - var(--ch)) 100%,0 100%,0 var(--ch))}
+
+  /* header band, the 90s channel bar on the TEL blues */
+  .hdr{position:absolute;left:0;top:0;width:1920px;height:110px;background:linear-gradient(180deg,#0e2a66,#061436);
+    border-bottom:2px solid #fff;box-shadow:0 6px 18px #0009}
+  .hdr::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:3px;background:linear-gradient(90deg,var(--pink),var(--blue));opacity:.8}
+  .wordmark{position:absolute;right:40px;top:0;height:108px;display:flex;align-items:center;font-family:var(--display);font-weight:800;font-size:30px;letter-spacing:.14em;color:var(--text-hi);white-space:nowrap;text-shadow:0 2px 0 #000a}
+  .wordmark span{color:var(--pink);margin:0 .32em}
+  .clock{position:absolute;left:960px;top:0;height:108px;transform:translateX(-50%);display:flex;align-items:center;gap:14px;font-family:var(--mono);font-size:34px;letter-spacing:.1em;color:var(--cyan);white-space:nowrap}
+  .clock small{font-size:26px;color:var(--text-mid);letter-spacing:.2em}
+  .musicph{display:none;position:absolute;left:60px;top:56px;width:760px;height:44px;outline:2px dashed #35d6ff66;outline-offset:-2px;
+    align-items:center;justify-content:center;font-family:var(--mono);font-size:26px;letter-spacing:.2em;color:#7a89ad}
+  .guide .musicph{display:flex}
+
+  /* the card plate */
+  .card{position:absolute;left:40px;top:126px;width:1840px;height:624px;padding:26px 40px 30px;
+    background:linear-gradient(180deg,#101a32f2,#060b1af5);border:1px solid var(--edge);display:flex;flex-direction:column;gap:18px;overflow:hidden}
+  .card::before{content:"";position:absolute;left:0;top:26px;bottom:26px;width:5px;background:var(--pink);box-shadow:0 0 18px #f22dc8aa}
+  .ct{font-family:var(--display);font-weight:800;font-size:40px;letter-spacing:.06em;color:var(--text-hi);line-height:1;display:flex;align-items:baseline;gap:22px;flex:none}
+  .ct small{font-family:var(--mono);font-weight:400;font-size:26px;letter-spacing:.18em;text-transform:uppercase;color:var(--cyan)}
+  .cbody{flex:1;min-height:0;position:relative}
+  .scene-station .card{background:none;border:0}
+  .scene-station .card::before{display:none}
+
+  /* Local strip: the hole for the EVE chat window capture */
+  .local{position:absolute;left:40px;top:770px;width:1840px;height:246px;border:1px solid var(--edge);box-shadow:0 0 0 1px #35d6ff22 inset}
+  .local .tab{position:absolute;left:-1px;top:-1px;padding:4px 16px;background:#03060ecc;border:1px solid var(--edge);border-bottom-color:transparent;
+    font-family:var(--mono);font-size:26px;letter-spacing:.24em;text-transform:uppercase;color:var(--cyan);line-height:1.2}
+  .local .ph{display:none;position:absolute;inset:0;align-items:center;justify-content:center;font-family:var(--mono);font-size:28px;letter-spacing:.2em;color:#7a89ad;outline:2px dashed #35d6ff66;outline-offset:-14px}
+  .guide .local .ph{display:flex}
+  .nolocal .local{display:none}
+
+  /* the scroll along the bottom, as on weather.html but full width */
+  .ticker{position:absolute;left:0;top:1022px;width:1920px;height:58px;display:flex;align-items:center;
+    background:#03060eeb;border-top:1px solid var(--edge);overflow:hidden}
+  .noticker .ticker{display:none}
+  .tk-label{flex:none;display:flex;align-items:center;gap:12px;padding:0 22px 0 26px;height:100%;border-right:1px solid var(--edge);
+    font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.2em;text-transform:uppercase;color:var(--cyan);white-space:nowrap}
+  .tk-win{position:relative;flex:1;min-width:0;height:100%;overflow:hidden;
+    -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 40px,#000 calc(100% - 40px),transparent 100%);
+            mask-image:linear-gradient(90deg,transparent 0,#000 40px,#000 calc(100% - 40px),transparent 100%)}
+  .tk-track{position:absolute;left:0;top:0;height:100%;display:flex;align-items:center;white-space:nowrap;will-change:transform}
+  .tk-set{display:flex;align-items:center;flex:none;height:100%}
+  .tk-item{flex:none;display:flex;align-items:center;gap:12px;padding:0 28px;height:100%;font-family:var(--body);font-weight:600;font-size:28px;letter-spacing:.02em;color:var(--text-mid)}
+  .tk-city{font-family:var(--mono);font-size:26px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-hi)}
+  .tk-temp{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.04em;color:var(--pink)}
+  .tk-cond{color:var(--text-mid)}
+  .tk-item svg{width:30px;height:30px;flex:none;color:var(--cyan);filter:drop-shadow(0 0 6px #35d6ff66)}
+  .tk-item.night svg{color:#a9b0ff}
+  .tk-dot{flex:none;width:7px;height:7px;background:var(--pink);box-shadow:0 0 8px var(--pink);transform:rotate(45deg);display:block}
+  .tk-head{flex:none;font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:.2em;padding:2px 12px;margin:0 6px 0 10px;border:1px solid var(--pink);color:var(--pink);background:#f22dc81f}
+  .tk-kind{font-family:var(--mono);font-size:26px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan)}
+  .tk-kind.patch{color:var(--pink)}
+  .tk-when{font-family:var(--mono);font-size:26px;letter-spacing:.08em;color:var(--cyan)}
+  .tk-tag{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.16em;padding:0 10px;border:1px solid var(--blue);color:var(--cyan);background:#1470e920}
+  .tk-tag.yt{border-color:#ff3030;color:#ff8080;background:#ff30301c}
+  .tk-tag.sp{border-color:#1db954;color:#7be8a0;background:#1db95420}
+  .tk-tag.dc{border-color:#5865f2;color:#a9b0ff;background:#5865f21f}
+  @keyframes tkscroll{to{transform:translateX(calc(-1 * var(--w)))}}
+  @media(prefers-reduced-motion:reduce){.tk-track{animation:none!important}}
+  /* Conditions: 4 x 2 city tiles */
+  .tiles{display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(2,1fr);gap:16px;height:100%}
+  .tile{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px;background:#0b142866;border:1px solid var(--edge);padding:6px;min-height:0}
+  .tile .city{font-family:var(--mono);font-size:28px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);white-space:nowrap}
+  .tile svg{width:72px;height:72px;color:var(--cyan);filter:drop-shadow(0 0 10px #35d6ff66)}
+  .tile.night svg{color:#a9b0ff}
+  .tile .temp{font-family:var(--display);font-weight:700;font-size:48px;letter-spacing:.02em;color:var(--pink);line-height:1;white-space:nowrap}
+  .tile .cond{font-family:var(--body);font-weight:600;font-size:30px;color:var(--text-mid);line-height:1.1}
+  .tile .tod{font-family:var(--mono);font-size:26px;letter-spacing:.2em;color:var(--text-dim)}
+  .tile.none svg{opacity:.25}
+  /* Headlines and Forecast rows */
+  .rows{display:flex;flex-direction:column;gap:12px;height:100%}
+  .row{display:flex;align-items:center;gap:22px;min-height:52px;border-bottom:1px solid #1c2c4d88;padding-bottom:8px}
+  .row .kind{flex:none;min-width:120px;font-family:var(--mono);font-size:26px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan)}
+  .row .kind.patch{color:var(--pink)}
+  .row .when{flex:none;min-width:330px;font-family:var(--mono);font-size:28px;letter-spacing:.06em;color:var(--cyan);white-space:nowrap}
+  .row .when.live{color:var(--pink)}
+  .row .txt{flex:1;min-width:0;font-family:var(--body);font-weight:600;font-size:32px;color:var(--text-hi);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .day{flex:none;min-width:120px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono);font-size:28px;letter-spacing:.1em;text-transform:uppercase;color:var(--pink)}
+  .row .ev{flex:1;min-width:0;font-family:var(--body);font-weight:600;font-size:32px;line-height:1.15;color:var(--text-mid);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .empty{font-family:var(--body);font-weight:600;font-size:34px;color:var(--text-dim)}
+  .cols{display:grid;grid-template-columns:1060px 1fr;gap:40px;height:100%}
+  .colh{font-family:var(--mono);font-size:26px;letter-spacing:.24em;text-transform:uppercase;color:var(--pink);margin-bottom:14px}
+  /* Station ID */
+  .station{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;text-align:center}
+  .station .big{font-family:var(--display);font-weight:800;font-size:96px;letter-spacing:.1em;line-height:1.05;color:var(--text-hi);text-shadow:0 4px 0 #000a,0 0 40px #2e8bff55}
+  .station .big span{color:var(--pink)}
+  .station .clk{font-family:var(--mono);font-size:48px;letter-spacing:.14em;color:var(--cyan)}
+  .station .glyphs{display:flex;gap:34px;align-items:flex-end}
+  .station .glyphs div{display:flex;flex-direction:column;align-items:center;gap:6px}
+  .station .glyphs svg{width:64px;height:64px;color:var(--cyan)}
+  .station .glyphs .night svg{color:#a9b0ff}
+  .station .glyphs span{font-family:var(--mono);font-size:26px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);white-space:nowrap}
+  .station .slogan{font-family:var(--body);font-weight:600;font-size:40px;color:var(--text-mid);max-width:1500px}
+  .station .links{display:flex;gap:40px}
+  .station .links span{display:flex;align-items:center;gap:12px;font-family:var(--mono);font-size:28px;color:var(--text-mid)}
+  /* Outlook: stat tiles and the forecaster's note */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:18px}
+  .stat{background:#0b142866;border:1px solid var(--edge);padding:16px 24px;display:flex;flex-direction:column;gap:8px}
+  .stat .lab{font-family:var(--mono);font-size:26px;letter-spacing:.22em;text-transform:uppercase;color:var(--text-dim)}
+  .stat .val{font-family:var(--display);font-weight:700;font-size:72px;line-height:1;color:var(--text-hi);white-space:nowrap}
+  .stat .val.ok{color:var(--cyan)} .stat .val.vip{color:var(--amber)}
+  .note{background:linear-gradient(180deg,#0e2a6655,#06143655);border:1px solid var(--edge);padding:24px 28px;margin-top:6px;display:flex;flex-direction:column;gap:8px}
+  .note .lab{font-family:var(--mono);font-size:26px;letter-spacing:.24em;text-transform:uppercase;color:var(--pink)}
+  .note .txt{font-family:var(--body);font-weight:600;font-size:40px;line-height:1.2;color:var(--text-hi);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.scene-outlook .cbody{display:flex;flex-direction:column;justify-content:space-between}
+  .scene-outlook .note .txt{font-size:46px;-webkit-line-clamp:4}
+  .nexton{margin-top:16px;display:flex;align-items:center;gap:20px;font-family:var(--body);font-weight:600;font-size:32px;color:var(--text-mid);white-space:nowrap;overflow:hidden}
+  .nexton .lab{font-family:var(--mono);font-size:26px;letter-spacing:.2em;text-transform:uppercase;color:var(--cyan);flex:none}
+  .nexton .when{font-family:var(--mono);font-size:28px;color:var(--pink);flex:none}
+  .nexton .nm{overflow:hidden;text-overflow:ellipsis}
+  /* Hot Systems table */
+  .hot{display:flex;flex-direction:column;height:100%;min-height:0}
+  .hrow{display:grid;grid-template-columns:70px 1fr 260px 260px 260px;gap:18px;align-items:center;padding:0;flex:1 1 0;min-height:0;border-bottom:1px solid #1c2c4d88}
+  .hrow.head{flex:none;padding:0 0 6px;border-bottom:1px solid var(--edge)}
+  .hrow.head span{font-family:var(--mono);font-size:26px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-dim);text-align:right}
+  .hrow.head span:nth-child(2){text-align:left}
+  .hrow .rk{font-family:var(--mono);font-size:30px;color:var(--text-dim)}
+  .hrow .sys{min-width:0;display:flex;flex-direction:column;gap:2px}
+  .hrow .sys b{font-family:var(--body);font-weight:700;font-size:44px;line-height:1;color:var(--text-hi);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hrow .sys i{font-style:normal;font-family:var(--body);font-weight:600;font-size:30px;line-height:1;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hrow .num{font-family:var(--display);font-weight:700;font-size:36px;text-align:right;white-space:nowrap}
+  .hot.many .sys b{font-size:34px} .hot.many .sys i{font-size:26px} .hot.many .num{font-size:30px}
+  .hrow .num.k{color:var(--pink)} .hrow .num.p{color:var(--text-dim)} .hrow .num.j{color:var(--cyan)}
+  /*CARD-CSS*/
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="hdr">
+    <div class="musicph">MUSIC BAR 760 × 44</div>
+    <div class="clock"><span id="clock">00:00</span><small>EVE</small></div>
+    <div class="wordmark">THIS <span>EVE</span> WEATHER CHANNEL</div>
+  </div>
+
+  <div class="card chamfer" id="card"></div>
+
+  <div class="local" id="local"><div class="tab">Local</div><div class="ph">LOCAL CHAT WINDOW CAPTURE 1840 × 246</div></div>
+
+  <div class="ticker" id="ticker"><div class="tk-label">EVE Weather</div><div class="tk-win" id="tkWin"><div class="tk-track" id="tkTrack"></div></div></div>
+</div>
+<script>
+  var q; try{ q=new URLSearchParams(location.search); }catch(e){ q={get:function(){return null}}; }
+  var MANUAL=q.get('src')==='manual', GUIDE=q.get('guide')==='1', CASE=GUIDE?(q.get('case')||''):'', auto=q.get('auto')!=='0';
+  var UNITS=(q.get('units')||'both').toLowerCase(); if(UNITS!=='f'&&UNITS!=='c') UNITS='both';
+  var SPEED=Math.max(10,Math.min(300,parseFloat(q.get('speed'))||55));
+  var SHOW_NEWS=q.get('news')!=='0'&&!MANUAL, SHOW_NEXT=q.get('upnext')!=='0'&&auto, DESK=q.get('desk')!=='0'&&!MANUAL;
+  var SCENES=['conditions','outlook','hot','forecast','headlines','station'];
+  var SCENE=q.get('scene')||'conditions'; if(SCENES.indexOf(SCENE)<0) SCENE='conditions';
+  document.body.classList.add('scene-'+SCENE);
+  if(GUIDE) document.body.classList.add('guide');
+  if(q.get('ticker')==='0') document.body.classList.add('noticker');
+  if(q.get('local')==='0') document.body.classList.add('nolocal');
+  function fit(){
+    var s=Math.min(innerWidth/1920,innerHeight/1080), st=document.getElementById('stage');
+    st.style.transform = Math.abs(s-1)>.001 ? 'scale('+s+')' : '';
+  }
+  addEventListener('resize',fit); fit();
+  function el(t,c,x){var e=document.createElement(t); if(c) e.className=c; if(x!=null) e.textContent=x; return e;}
+
+  /* ---------- show timing (same rule in every TEL overlay) ----------
+     A show is ON from its start to its end, then HOLDS for 30 minutes, then the next show takes over.
+     If the next show starts inside those 30 minutes, it takes over at the end instead. ?now= is the test clock. */
+  var SKIP_RE=/no\s*show|vacation|to\s*be\s*booked|\bTBB\b|cancel/i;
+  var HOLD_MS=30*60*1000, LEAD_MS=90*60*1000;
+  var TEST_NOW=q.get('now')?Date.parse(q.get('now')):NaN, CLOCK_OFF=isNaN(TEST_NOW)?0:TEST_NOW-Date.now();
+  function nowMs(){return Date.now()+CLOCK_OFF;}
+  if(!isNaN(TEST_NOW)){
+    var tb=document.createElement('div');
+    tb.style.cssText='position:fixed;top:12px;left:900px;z-index:99;padding:8px 14px;background:#ffb648;color:#1a1000;font:700 22px/1 Consolas,monospace;letter-spacing:.06em';
+    var tick=function(){tb.textContent='TEST CLOCK '+new Date(nowMs()).toISOString().slice(0,16).replace('T',' ')+' UTC';};
+    tick(); setInterval(tick,15000); document.body.appendChild(tb);
+  }
+  function pickShow(xs,now){
+    var live=xs.filter(function(x){return now>=x.at&&now<x.end;})[0];
+    if(live) return {x:live,state:'live'};
+    var nx=xs.filter(function(x){return x.at>now;})[0];
+    var held=xs.filter(function(x){return now>=x.end&&now<x.end+HOLD_MS;}).sort(function(a,b){return b.end-a.end;})[0];
+    if(held&&!(nx&&nx.at<held.end+HOLD_MS)) return {x:held,state:'held'};
+    return nx?{x:nx,state:'next'}:null;
+  }
+  var DOW=['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  function p2(n){return n<10?'0'+n:''+n;}
+  function whenOf(ms){var d=new Date(ms); return DOW[d.getUTCDay()]+' '+(d.getUTCMonth()+1)+'/'+d.getUTCDate()+' · '+p2(d.getUTCHours())+':'+p2(d.getUTCMinutes())+' EVE';}
+
+  function clock(){var d=new Date(nowMs()); document.getElementById('clock').textContent=p2(d.getUTCHours())+':'+p2(d.getUTCMinutes());}
+  clock(); setInterval(clock,1000);
+  (function minute(){ var ms=60000-(Date.now()%60000); setTimeout(function(){ if(SCENE==='station'||SCENE==='outlook'){ cardSig=null; render(); } minute(); },ms); })();
+
+  /* ---------- data: weather, news, shows, the desk ---------- */
+  var LINKS=[['yt','YOUTUBE','youtube.com/@CeemaGPT'],['sp','SPOTIFY','spotify.thisevelife.space'],['dc','DISCORD','discord.thisevelife.space']];
+  var CITIES=[['San Francisco',37.77,-122.42],['Chicago',41.88,-87.63],['New York',40.71,-74.01],['London',51.51,-0.13],
+              ['Paris',48.86,2.35],['Reykjavík',64.15,-21.94],['Hong Kong',22.32,114.17],['Sydney',-33.87,151.21]];
+  var WX_URL='https://api.open-meteo.com/v1/forecast?latitude='+CITIES.map(function(c){return c[1];}).join(',')
+    +'&longitude='+CITIES.map(function(c){return c[2];}).join(',')+'&current=temperature_2m,weather_code,is_day&timezone=auto';
+  var WX_MS=10*60*1000, SITE_MS=2*60*1000, DESK_MS=20*1000;
+  var wx=null, news=null, shows=null, desk={}, esi=null;
+
+  /* The six card pages share one browser profile in OBS, so a reading one page fetched serves the others:
+     each pull is kept in localStorage with its time, a page takes a reading younger than its interval instead
+     of fetching again, and a reload (a scene switch with refresh on, or a crash) starts with the last reading. */
+  var CK='telweather.', JIT=Math.floor(Math.random()*4000);
+  function cget(k,maxAge){ try{ var v=JSON.parse(localStorage.getItem(CK+k)||'null'); return v&&(Date.now()-v.t)<maxAge?v.d:null; }catch(e){ return null; } }
+  function cput(k,d){ try{ localStorage.setItem(CK+k,JSON.stringify({t:Date.now(),d:d})); }catch(e){} }
+  function cany(k){ try{ var v=JSON.parse(localStorage.getItem(CK+k)||'null'); return v?v.d:null; }catch(e){ return null; } }
+  if(!GUIDE){ wx=cany('wx'); news=cany('news'); shows=cany('shows'); esi=cany('esi'); var d0=cany('desk'); if(d0&&typeof d0==='object') desk=d0; }
+
+  // WMO weather codes -> [glyph, words]. Open-Meteo documents the codes on its forecast API page.
+    var G={
+      sun:'<circle cx="12" cy="12" r="4.2" fill="currentColor"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+      moon:'<path d="M14.5 3a8.5 8.5 0 1 0 6.5 13.6A7 7 0 0 1 14.5 3z" fill="currentColor"/>',
+      part:'<circle cx="8" cy="9" r="3.4" fill="currentColor"/><path d="M8 2.5v2M2.5 9h2M3.9 4.9l1.4 1.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9 20h8.5a3.5 3.5 0 0 0 .6-6.95A5 5 0 0 0 8.6 12.4 3.8 3.8 0 0 0 9 20z" fill="currentColor"/>',
+      cloud:'<path d="M7 19h10.5a4 4 0 0 0 .7-7.94A6 6 0 0 0 6.6 10.3 4.4 4.4 0 0 0 7 19z" fill="currentColor"/>',
+      fog:'<path d="M4 9h16M3 13h18M5 17h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+      rain:'<path d="M7 15h10.5a4 4 0 0 0 .7-7.94A6 6 0 0 0 6.6 6.3 4.4 4.4 0 0 0 7 15z" fill="currentColor"/><path d="M8.5 17.5l-1.2 3M12.5 17.5l-1.2 3M16.5 17.5l-1.2 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+      snow:'<path d="M7 14h10.5a4 4 0 0 0 .7-7.94A6 6 0 0 0 6.6 5.3 4.4 4.4 0 0 0 7 14z" fill="currentColor"/><circle cx="8.5" cy="18" r="1.4" fill="currentColor"/><circle cx="12.5" cy="20.5" r="1.4" fill="currentColor"/><circle cx="16.5" cy="18" r="1.4" fill="currentColor"/>',
+      storm:'<path d="M7 13h10.5a4 4 0 0 0 .7-7.94A6 6 0 0 0 6.6 4.3 4.4 4.4 0 0 0 7 13z" fill="currentColor"/><path d="M13 13l-3 5h3l-1.5 4.5 4-6.5h-3z" fill="currentColor"/>'
+    };
+    function cond(code,day){
+      code=+code;
+      if(code===0) return [day?'sun':'moon', day?'Clear':'Clear night'];
+      if(code<=2) return [day?'part':'moon', 'Partly cloudy'];
+      if(code===3) return ['cloud','Overcast'];
+      if(code<=48) return ['fog','Fog'];
+      if(code<=57) return ['rain','Drizzle'];
+      if(code<=67) return ['rain',code>=66?'Freezing rain':'Rain'];
+      if(code<=77) return ['snow','Snow'];
+      if(code<=82) return ['rain','Showers'];
+      if(code<=86) return ['snow','Snow showers'];
+      return ['storm','Thunderstorm'];
+    }
+  function temps(c){
+    var f=Math.round(c*9/5+32), cc=Math.round(c);
+    return UNITS==='f'?f+'°F':UNITS==='c'?cc+'°C':f+'°F / '+cc+'°C';
+  }
+  function svg(k){ var s=document.createElementNS('http://www.w3.org/2000/svg','svg'); s.setAttribute('viewBox','0 0 24 24'); s.innerHTML=G[k]||G.cloud; return s; }
+  function mapWx(d){                                   // Open-Meteo answer (array, or one object for one city) -> [{city,temp,code,day}]
+    var arr=Array.isArray(d)?d:[d];
+    return arr.map(function(x,i){var c=x&&x.current; if(!c||typeof c.temperature_2m!=='number'||!CITIES[i]) return null;
+      return {city:CITIES[i][0],temp:c.temperature_2m,code:c.weather_code,day:c.is_day!==0};}).filter(Boolean);
+  }
+  function nextShows(list,max){
+    var now=nowMs();
+    var xs=(list||[]).filter(function(s){return !SKIP_RE.test(s.name||'')&&s.ownChannel!==false;})
+      .map(function(s){var at=Date.parse(s.at);return {name:String(s.name||'').trim(),at:at,end:s.endAt?Date.parse(s.endAt):at+3*3600e3};})
+      .filter(function(x){return x.name&&!isNaN(x.at);}).sort(function(a,b){return a.at-b.at;});
+    var p=pickShow(xs,now), out=[];
+    if(p&&p.state!=='next') out.push({name:p.x.name,at:p.x.at,live:true});
+    xs.forEach(function(x){ if(x.at>now&&out.length<max) out.push({name:x.name,at:x.at,live:false}); });
+    return out;
+  }
+  function loadWx(){
+    if(GUIDE){ wx=CITIES.map(function(c,i){return {city:c[0],temp:[14,3,8,11,12,-1,24,19][i],code:[0,71,3,61,2,45,1,95][i],day:i%3!==2};});
+      if(CASE==='sevencities') wx=wx.slice(0,7); update(); return; }
+    var c=cget('wx',WX_MS-5000); if(c){ wx=c; update(); return; }
+    fetch(WX_URL,{cache:'no-store'}).then(function(r){if(!r.ok) throw 0; return r.json();}).then(function(d){
+      var out=mapWx(d); if(out.length){ wx=out; cput('wx',wx); } update();
+    }).catch(update);                                    // keep the last reading
+  }
+  function loadNews(){
+    if(!SHOW_NEWS){ update(); return; }
+    if(GUIDE){ news=[{kind:'patch',text:'Patch Notes - Version 23.02 - 2026-11-03'},{kind:'news',text:'Sample headline from the EVE news feed'},
+      {kind:'news',text:'Another headline, this one long enough to show how a wide line is cut off at the edge of the card'}]; update(); return; }
+    var c=cget('news',SITE_MS-5000); if(c){ news=c; update(); return; }
+    fetch('/api/public/news',{cache:'no-store'}).then(function(r){if(!r.ok) throw 0; return r.json();}).then(function(d){
+      news=(d&&Array.isArray(d.items)?d.items:[]).filter(function(n){return n&&n.text&&n.kind!=='show';}); cput('news',news); update();
+    }).catch(update);
+  }
+  function loadShows(){
+    var SCHED=MANUAL?['manual.json']:['/api/public/schedule','/api/public/feed'], i=0;
+    if(!SHOW_NEXT){ update(); return; }
+    if(GUIDE){ var n=nowMs(); shows=[{name:'This EVE Life · Episode Name Goes Here',at:n+26*3600e3,live:false},{name:'Office Hours EP 6',at:n+3*86400e3,live:false},
+      {name:'Special #14 · Guest Name',at:n+5*86400e3,live:false},{name:'This EVE Month · November',at:n+8*86400e3,live:false},{name:'Ceema Plays EVE & Office Hours',at:n+10*86400e3,live:false}]; update(); return; }
+    var c=cget('shows',SITE_MS-5000); if(c){ shows=c; update(); return; }
+    (function nx(){
+      if(i>=SCHED.length){ update(); return; }         // calendar down: keep the last list
+      fetch(SCHED[i++],{cache:'no-store'}).then(function(r){if(!r.ok) throw 0; return r.json();})
+        .then(function(d){ shows=nextShows(d.shows||d.nextShows||[],5); cput('shows',shows); update(); }).catch(nx);
+    })();
+  }
+  function loadDesk(){
+    if(!DESK){ if(!CASE) desk={}; update(); return; }
+    if(GUIDE){ desk={outlook:{title:'Partly cloudy over the trade hubs, a 60% chance of blobs after downtime',sub:''},slogan:{title:'',sub:''},
+      hot1:{title:'Jita',sub:'Heavy scams, 90% chance of gank'},hot2:{title:'Delve',sub:'Partly cloudy with Rorquals'},
+      fc1:{title:'Tue',sub:'Patch day: downtime extended to 11:30'},fc2:{title:'Sat',sub:'Mass test on Singularity'}}; update(); return; }
+    var c=cget('desk',DESK_MS-5000); if(c){ desk=c; update(); return; }
+    fetch('/api/weather',{cache:'no-store'}).then(function(r){if(!r.ok) throw 0; return r.json();}).then(function(d){
+      desk=(d&&d.stories&&typeof d.stories==='object')?d.stories:{}; cput('desk',desk); update();
+    }).catch(update);                                    // keep the last lines (a redeploy must not blink them off)
+  }
+  function deskLine(k){ var v=desk[k]; return v&&typeof v.title==='string'?{title:v.title.trim(),sub:String(v.sub||'').trim()}:{title:'',sub:''}; }
+
+  /* ---------- the scroll (as on weather.html) ---------- */
+  var tkSig=null;
+  function mkSet(){
+    var set=el('div','tk-set');
+    (wx||[]).forEach(function(w){
+      var c=cond(w.code,w.day), it=el('span','tk-item'+(w.day?'':' night'));
+      it.appendChild(el('span','tk-city',w.city)); it.appendChild(svg(c[0]));
+      it.appendChild(el('span','tk-temp',temps(w.temp))); it.appendChild(el('span','tk-cond',c[1]));
+      set.appendChild(it); set.appendChild(el('i','tk-dot'));
+    });
+    if(news&&news.length){
+      set.appendChild(el('b','tk-head','EVE News'));
+      news.forEach(function(n){
+        var it=el('span','tk-item');
+        it.appendChild(el('span','tk-kind '+(n.kind==='patch'?'patch':''), n.kind==='patch'?'Patch':'News'));
+        it.appendChild(document.createTextNode(n.text));
+        set.appendChild(it); set.appendChild(el('i','tk-dot'));
+      });
+    }
+    var up=(shows||[]).slice(0,3);
+    if(up.length){
+      set.appendChild(el('b','tk-head','Up Next'));
+      up.forEach(function(e){
+        var it=el('span','tk-item');
+        it.appendChild(el('b','tk-when',e.live?'LIVE NOW':whenOf(e.at))); it.appendChild(document.createTextNode(e.name));
+        set.appendChild(it); set.appendChild(el('i','tk-dot'));
+      });
+    }
+    LINKS.forEach(function(l){
+      var it=el('span','tk-item'); it.appendChild(el('b','tk-tag '+l[0],l[1])); it.appendChild(document.createTextNode(l[2]));
+      set.appendChild(it); set.appendChild(el('i','tk-dot'));
+    });
+    return set;
+  }
+  function buildTicker(){
+    var track=document.getElementById('tkTrack'), win=document.getElementById('tkWin');
+    var key=JSON.stringify([wx,news,(shows||[]).slice(0,3)]);
+    if(key===tkSig) return; tkSig=key;                   // same data: leave the scroll running
+    track.style.animation='none'; track.textContent='';
+    var first=mkSet(); track.appendChild(first);
+    var w=first.offsetWidth+1; first.style.width=w+'px';
+    var n=Math.ceil(win.clientWidth/w)+1;
+    for(var i=1;i<n;i++){ var c=mkSet(); c.style.width=w+'px'; track.appendChild(c); }
+    track.style.setProperty('--w',w+'px');
+    void track.offsetWidth;
+    track.style.animation='tkscroll '+(w/SPEED).toFixed(2)+'s linear infinite';
+  }
+
+  /* ---------- the cards ---------- */
+  var TITLES={conditions:'Current Conditions',outlook:'New Eden Outlook',hot:'Hot Systems',forecast:'Extended Forecast',headlines:'Headlines',station:'Station ID'};
+  var RENDER={};
+  function title(sub){ var t=el('div','ct',TITLES[SCENE]); if(sub) t.appendChild(el('small',null,sub)); return t; }
+  function stub(card){ card.appendChild(title()); card.appendChild(el('div','cbody')); }
+  SCENES.forEach(function(s){ RENDER[s]=stub; });
+  var cardSig=null;
+  function render(){
+    var card=document.getElementById('card');
+    var key=JSON.stringify([SCENE,wx,news,shows,desk,esi]);
+    if(key===cardSig) return; cardSig=key;
+    card.textContent=''; (RENDER[SCENE]||stub)(card);
+  }
+  function update(){ buildTicker(); render(); }
+
+  loadWx(); loadNews(); loadShows(); loadDesk();
+  setTimeout(function(){ setInterval(loadWx,WX_MS); setInterval(loadNews,SITE_MS); setInterval(loadShows,SITE_MS); setInterval(loadDesk,DESK_MS); },JIT);
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ tkSig=null; cardSig=null; update(); });   // re-measure once the fonts are in
+
+  /* ---------- Task 5 cards: conditions, headlines, forecast, station ---------- */
+  RENDER.conditions=function(card){
+    card.appendChild(title(wx?'Live':'Waiting for data'));
+    var body=el('div','cbody'), grid=el('div','tiles'); body.appendChild(grid); card.appendChild(body);
+    CITIES.forEach(function(c){
+      var w=(wx||[]).filter(function(x){return x.city===c[0];})[0];
+      var t=el('div','tile'+(w&&!w.day?' night':'')+(w?'':' none'));
+      t.appendChild(el('div','city',c[0]));
+      var k=w?cond(w.code,w.day):['cloud','']; t.appendChild(svg(k[0]));
+      t.appendChild(el('div','temp',w?temps(w.temp):'—'));
+      t.appendChild(el('div','cond',w?k[1]:'No reading'));
+      t.appendChild(el('div','tod',w?(w.day?'Day':'Night'):''));
+      grid.appendChild(t);
+    });
+  };
+  RENDER.headlines=function(card){
+    card.appendChild(title('EVE Online news'));
+    var body=el('div','cbody'), rows=el('div','rows'); body.appendChild(rows); card.appendChild(body);
+    var list=(news||[]).slice(0,8);
+    if(!list.length){ rows.appendChild(el('div','empty','No headlines right now')); return; }
+    list.forEach(function(n){ var r=el('div','row'); r.appendChild(el('span','kind'+(n.kind==='patch'?' patch':''),n.kind==='patch'?'Patch':'News')); r.appendChild(el('span','txt',n.text)); rows.appendChild(r); });
+  };
+  RENDER.forecast=function(card){
+    card.appendChild(title('EVE time (UTC)'));
+    var body=el('div','cbody'), cols=el('div','cols'); body.appendChild(cols); card.appendChild(body);
+    var left=el('div'), right=el('div'); cols.appendChild(left); cols.appendChild(right);
+    left.appendChild(el('div','colh','This EVE Life'));
+    var lr=el('div','rows'); left.appendChild(lr);
+    var list=(shows||[]).slice(0,5);
+    if(!list.length) lr.appendChild(el('div','empty',SHOW_NEXT?'No shows on the calendar':'Calendar off'));
+    list.forEach(function(e){ var r=el('div','row'); r.appendChild(el('span','when'+(e.live?' live':''),e.live?'LIVE NOW':whenOf(e.at))); r.appendChild(el('span','txt',e.name)); lr.appendChild(r); });
+    right.appendChild(el('div','colh','New Eden Calendar'));
+    var rr=el('div','rows'), any=false; right.appendChild(rr);
+    ['fc1','fc2','fc3','fc4','fc5'].forEach(function(k){ var v=deskLine(k); if(!v.title) return; any=true;
+      var r=el('div','row'); r.appendChild(el('span','day',v.title)); r.appendChild(el('span','ev',v.sub||'')); rr.appendChild(r); });
+    if(!any) rr.appendChild(el('div','empty','Nothing on the books'));
+  };
+  RENDER.station=function(card){
+    var st=el('div','station'); card.appendChild(st);
+    var big=el('div','big'); big.appendChild(document.createTextNode('THIS ')); big.appendChild(el('span',null,'EVE')); big.appendChild(document.createElement('br')); big.appendChild(document.createTextNode('WEATHER CHANNEL')); st.appendChild(big);
+    var d=new Date(nowMs()); st.appendChild(el('div','clk',p2(d.getUTCHours())+':'+p2(d.getUTCMinutes())+' EVE'));
+    var g=el('div','glyphs'); st.appendChild(g);
+    CITIES.forEach(function(c){ var w=(wx||[]).filter(function(x){return x.city===c[0];})[0]; var k=w?cond(w.code,w.day):['cloud',''];
+      var it=el('div',w&&!w.day?'night':''); it.appendChild(svg(k[0])); it.appendChild(el('span',null,c[0].replace('San Francisco','SF').replace('Hong Kong','HK').replace('New York','NYC'))); g.appendChild(it); });
+    st.appendChild(el('div','slogan',deskLine('slogan').title||'You are watching This EVE Weather Channel'));
+    var ln=el('div','links'); st.appendChild(ln);
+    LINKS.forEach(function(l){ var sp=el('span'); sp.appendChild(el('b','tk-tag '+l[0],l[1])); sp.appendChild(document.createTextNode(l[2])); ln.appendChild(sp); });
+  };
+  if(GUIDE&&q.get('selftest')==='1'){   // Open-Meteo shape check: one object for one city, and a short array
+    var one=mapWx({current:{temperature_2m:10,weather_code:0,is_day:1}}), seven=mapWx(CITIES.slice(0,7).map(function(){return {current:{temperature_2m:1,weather_code:3,is_day:0}};}));
+    console.log(one.length===1&&one[0].city==='San Francisco'&&seven.length===7?'selftest ok':'selftest FAILED');
+  }
+  cardSig=null; render();
+
+  /* ---------- Task 6: ESI (CCP's public API, no key) and the two cards that read it ---------- */
+  var ESI='https://esi.evetech.net/latest', ESI_MS=10*60*1000;
+  function esiGet(path){ return fetch(ESI+path+'?datasource=tranquility',{cache:'no-store'}).then(function(r){ if(!r.ok) throw 0; return r.json(); }); }
+  function namesFor(ids){                                // POST names; fall back to one GET per system
+    return fetch(ESI+'/universe/names/?datasource=tranquility',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(ids)})
+      .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+      .then(function(list){ var m={}; (list||[]).forEach(function(x){ if(x&&x.id) m[x.id]=x.name; }); return m; })
+      .catch(function(){ return Promise.all(ids.map(function(id){ return esiGet('/universe/systems/'+id+'/').then(function(x){return [id,x&&x.name];}).catch(function(){return [id,null];}); }))
+        .then(function(pairs){ var m={}; pairs.forEach(function(p){ if(p[1]) m[p[0]]=p[1]; }); return m; }); });
+  }
+  function loadEsi(){
+    if(GUIDE){
+      if(CASE==='esidown'||CASE==='typedonly'){ esi=null; update(); return; }
+      esi={players:24318,vip:false,at:nowMs(),kills:[['Jita',61,120,2400],['Tama',44,30,310],['Amamake',37,41,280],['Uedama',29,12,900],['1DQ1-A',22,9,410]]
+        .map(function(r){return {name:r[0],ship:r[1],pod:r[2],jumps:r[3]};})};
+      update(); return;
+    }
+    var c=cget('esi',ESI_MS-5000); if(c){ esi=c; update(); return; }
+    Promise.all([esiGet('/status/'),esiGet('/universe/system_kills/'),esiGet('/universe/system_jumps/')]).then(function(res){
+      var st=res[0]||{}, kills=(res[1]||[]).filter(function(k){return k&&typeof k.ship_kills==='number';}).sort(function(a,b){return b.ship_kills-a.ship_kills;}).slice(0,5);
+      var jumps={}; (res[2]||[]).forEach(function(j){ if(j&&j.system_id) jumps[j.system_id]=j.ship_jumps; });
+      if(!kills.length) throw 0;                       // downtime: keep the last reading
+      return namesFor(kills.map(function(k){return k.system_id;})).then(function(nm){
+        esi={players:typeof st.players==='number'?st.players:null,vip:!!st.vip,at:nowMs(),
+          kills:kills.map(function(k){return {name:nm[k.system_id]||('System '+k.system_id),ship:k.ship_kills,pod:k.pod_kills||0,jumps:jumps[k.system_id]||0};})};
+        cput('esi',esi); update();
+      });
+    }).catch(update);
+  }
+  function fmt(n){ return n==null?'—':String(n).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
+  RENDER.outlook=function(card){
+    card.appendChild(title(esi?'Tranquility':'Waiting for ESI'));
+    var body=el('div','cbody'); card.appendChild(body);
+    var stats=el('div','stats'); body.appendChild(stats);
+    function stat(lab,val,cls){ var d=el('div','stat'); d.appendChild(el('div','lab',lab)); d.appendChild(el('div','val'+(cls?' '+cls:''),val)); stats.appendChild(d); }
+    stat('Pilots online', esi?fmt(esi.players):'—');
+    stat('Tranquility', esi?(esi.vip?'VIP':'ONLINE'):'—', esi?(esi.vip?'vip':'ok'):'');
+    var d=new Date(nowMs()); stat('EVE time', p2(d.getUTCHours())+':'+p2(d.getUTCMinutes()));
+    var note=el('div','note'); body.appendChild(note);
+    note.appendChild(el('div','lab',"Forecaster's note"));
+    note.appendChild(el('div','txt',deskLine('outlook').title||"Clear skies across New Eden. Fly safe, or don't."));
+    var nx=(shows||[])[0];
+    if(nx){ var row=el('div','nexton'); row.appendChild(el('span','lab','Next on This EVE Life')); row.appendChild(el('span','when',nx.live?'LIVE NOW':whenOf(nx.at))); row.appendChild(el('span','nm',nx.name)); body.appendChild(row); }
+  };
+  RENDER.hot=function(card){
+    card.appendChild(title('Last hour · ESI'));
+    var body=el('div','cbody'), t=el('div','hot'); body.appendChild(t); card.appendChild(body);
+    var typed=['hot1','hot2','hot3','hot4','hot5'].map(deskLine).filter(function(v){return v.title;});
+    var rows=(esi?esi.kills:[]).map(function(k){ var m=typed.filter(function(v){return v.title.toLowerCase()===k.name.toLowerCase();})[0]; return {name:k.name,ship:k.ship,pod:k.pod,jumps:k.jumps,line:m?m.sub:''}; });
+    typed.forEach(function(v){ if(rows.length<7&&!rows.some(function(r){return r.name.toLowerCase()===v.title.toLowerCase();})) rows.push({name:v.title,ship:null,pod:null,jumps:null,line:v.sub}); });
+    if(rows.length>5) t.classList.add('many');          // 5 live plus up to 2 typed quiet systems; rows share the height
+    if(!rows.length){ t.appendChild(el('div','empty','No kill data yet')); return; }
+    var h=el('div','hrow head'); ['#','System','Ship kills','Pod kills','Jumps'].forEach(function(x){h.appendChild(el('span',null,x));}); t.appendChild(h);
+    rows.forEach(function(r,i){
+      var row=el('div','hrow'); row.appendChild(el('span','rk',String(i+1)));
+      var sys=el('div','sys'); sys.appendChild(el('b',null,r.name)); if(r.line) sys.appendChild(el('i',null,r.line)); row.appendChild(sys);
+      row.appendChild(el('span','num k',fmt(r.ship))); row.appendChild(el('span','num p',fmt(r.pod))); row.appendChild(el('span','num j',fmt(r.jumps)));
+      t.appendChild(row);
+    });
+  };
+  if(GUIDE&&CASE==='typedquiet'){ desk={hot1:{title:'Jita',sub:'Heavy scams, 90% chance of gank'},hot2:{title:'Delve',sub:'Partly cloudy with Rorquals'}}; DESK=false; }   // neither is in the sample top 5: Jita is, Delve is not
+  if(GUIDE&&CASE==='manylines'){ desk={hot1:{title:'Jita',sub:'line'},hot2:{title:'Tama',sub:'line'},hot3:{title:'Amamake',sub:'line'},hot4:{title:'Delve',sub:'line'},hot5:{title:'Thera',sub:'line'},fc1:{title:'Tuesday after downtime, the patch day for real',sub:'short'}}; DESK=false; }
+  if(GUIDE&&CASE==='esidown'){ desk={}; DESK=false; }
+  if(GUIDE&&CASE==='typedonly'){ desk={hot1:{title:'Jita',sub:'Heavy scams, 90% chance of gank'}}; DESK=false; }
+  if(GUIDE&&CASE==='long'){ var L=new Array(21).join('Long line '); desk.outlook={title:L,sub:''}; desk.hot1={title:'Jita',sub:L}; DESK=false; }
+  loadEsi(); setInterval(loadEsi,ESI_MS);
+  /*CARD-JS*/
+</script>
+</body>
+</html>
