@@ -21,7 +21,7 @@
        Coming Up     x 40, y 770, 1840 x 246 (Chris, 2026-11-04: replaces the Local chat strip): the next card in the
                      rotation, its one-line teaser, "NEXT IN m:ss" and a live preview of it (this page at 20% in an iframe,
                      ?mini=1, reading the shared cache; no extra pulls). The order and the time per card match
-                     tel-rotate.lua (?order=conditions,outlook,... and ?dwell=75); OBS's obsSceneChanged /
+                     tel-rotate.lua (default Station ID, Conditions, Outlook, Hot Systems, Forecast, Headlines; ?order=station,conditions,... and ?dwell=75); OBS's obsSceneChanged /
                      obsSourceActiveChanged events restart the countdown when the scene goes live. ?next=0 hides the band.
        Scroll        y 1022 to 1080: the weather scroll from weather.html (eight cities, EVE NEWS, UP NEXT, the addresses).
 
@@ -602,7 +602,8 @@
     hot:'The five systems with the most ship kills in the last hour.',forecast:'Patch days, downtime and the next This EVE Life shows.',
     headlines:'The latest from the EVE Online news desk.',station:'You are watching This EVE Weather Channel.'};
   var OBS_NAMES={'Conditions':'conditions','Outlook':'outlook','Hot Systems':'hot','Forecast':'forecast','Headlines':'headlines','Station ID':'station'};
-  var ORDER=(q.get('order')||'').split(',').filter(function(k){return SCENES.indexOf(k)>=0;}); if(ORDER.length<2) ORDER=SCENES.slice();
+  var DEFAULT_ORDER=['station','conditions','outlook','hot','forecast','headlines'];   // tel-rotate.lua's default list (Chris, 2026-11-04: Station ID first)
+  var ORDER=(q.get('order')||'').split(',').filter(function(k){return SCENES.indexOf(k)>=0;}); if(ORDER.length<2) ORDER=DEFAULT_ORDER.slice();
   var DWELL=Math.max(5,Math.min(3600,parseInt(q.get('dwell'),10)||75));
   function nextOf(k){ var i=ORDER.indexOf(k); return ORDER[i+1]||ORDER[0]; }   // off the list: the rotation rejoins at the first card
   var NEXT=nextOf(SCENE), activeAt=Date.now();
