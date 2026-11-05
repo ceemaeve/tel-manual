@@ -90,6 +90,9 @@
   .nx-in:empty{display:none}
   .nx-prev{flex:none;position:relative;width:384px;height:216px;border:1px solid var(--edge);box-shadow:0 0 0 1px #35d6ff22 inset;background:var(--void);overflow:hidden}
   .nx-prev iframe{position:absolute;left:0;top:0;width:1920px;height:1080px;border:0;transform:scale(.2);transform-origin:0 0;pointer-events:none;background:var(--void)}
+  .nx-still{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:repeating-linear-gradient(90deg,#0e2a66 0 48px,#061436 48px 96px)}
+  .nx-still b{font-family:var(--display);font-weight:800;font-size:34px;letter-spacing:.14em;color:var(--text-hi);text-shadow:0 2px 0 #000a}
+  .nx-still span{font-family:var(--mono);font-size:26px;letter-spacing:.3em;color:var(--cyan)}
   .nx-prev .tag{position:absolute;right:0;bottom:0;padding:2px 10px;background:#03060ecc;border-top:1px solid var(--edge);border-left:1px solid var(--edge);
     font-family:var(--mono);font-size:26px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-dim);line-height:1.2}
   .nonext .next{display:none}
@@ -600,21 +603,28 @@
   /* ---------- Coming Up band (Chris, 2026-11-04): the next card, its teaser, a countdown and a live preview ---------- */
   var TEASERS={conditions:'Eight cities at a glance, San Francisco to Sydney.',outlook:'Pilots online, Tranquility status and the forecaster\'s note.',
     hot:'The five systems with the most ship kills in the last hour.',forecast:'Patch days, downtime and the next This EVE Life shows.',
-    headlines:'The latest from the EVE Online news desk.',station:'You are watching This EVE Weather Channel.'};
-  var OBS_NAMES={'Conditions':'conditions','Outlook':'outlook','Hot Systems':'hot','Forecast':'forecast','Headlines':'headlines','Station ID':'station'};
-  var DEFAULT_ORDER=['station','conditions','outlook','hot','forecast','headlines'];   // tel-rotate.lua's default list (Chris, 2026-11-04: Station ID first)
-  var ORDER=(q.get('order')||'').split(',').filter(function(k){return SCENES.indexOf(k)>=0;}); if(ORDER.length<2) ORDER=DEFAULT_ORDER.slice();
+    headlines:'The latest from the EVE Online news desk.',station:'You are watching This EVE Weather Channel.',
+    commercials:'A word from our sponsors. Back in about a minute.'};
+  var STEP_TITLES={commercials:'Commercial Break'};
+  var OBS_NAMES={'Conditions':'conditions','Outlook':'outlook','Hot Systems':'hot','Forecast':'forecast','Headlines':'headlines','Station ID':'station','Commercials':'commercials'};
+  var STEPS=SCENES.concat(['commercials']);          // rotation steps: the six cards plus the Commercials scene (a VLC source in OBS, no page; Chris, 2026-11-04)
+  var DEFAULT_ORDER=['station','conditions','outlook','hot','forecast','headlines','commercials'];   // tel-rotate.lua's default list
+  var ORDER=(q.get('order')||'').split(',').filter(function(k){return STEPS.indexOf(k)>=0;}); if(ORDER.length<2) ORDER=DEFAULT_ORDER.slice();
   var DWELL=Math.max(5,Math.min(3600,parseInt(q.get('dwell'),10)||75));
   function nextOf(k){ var i=ORDER.indexOf(k); return ORDER[i+1]||ORDER[0]; }   // off the list: the rotation rejoins at the first card
   var NEXT=nextOf(SCENE), activeAt=Date.now();
   if(!document.body.classList.contains('nonext')){
-    document.getElementById('nxTitle').textContent=TITLES[NEXT];
+    document.getElementById('nxTitle').textContent=TITLES[NEXT]||STEP_TITLES[NEXT];
     document.getElementById('nxTeaser').textContent=TEASERS[NEXT];
   }
   if(!MINI&&!document.body.classList.contains('nonext')){   // the preview frame shows its band as text only: no frame inside a frame, no countdown
-    var pf=document.createElement('iframe'); pf.setAttribute('title','Preview of '+TITLES[NEXT]); pf.setAttribute('aria-hidden','true');
-    var pq=new URLSearchParams(location.search); pq.set('scene',NEXT); pq.set('mini','1'); pq.delete('next'); pq.delete('local'); pq.delete('poll');
-    pf.src=location.pathname+'?'+pq.toString(); document.getElementById('nxPrev').appendChild(pf);
+    if(TITLES[NEXT]){                                        // a card: live preview of its page
+      var pf=document.createElement('iframe'); pf.setAttribute('title','Preview of '+TITLES[NEXT]); pf.setAttribute('aria-hidden','true');
+      var pq=new URLSearchParams(location.search); pq.set('scene',NEXT); pq.set('mini','1'); pq.delete('next'); pq.delete('local'); pq.delete('poll');
+      pf.src=location.pathname+'?'+pq.toString(); document.getElementById('nxPrev').appendChild(pf);
+    } else {                                                 // Commercials: a still card, the scene is video
+      var sc=el('div','nx-still'); sc.appendChild(el('b',null,'COMMERCIAL')); sc.appendChild(el('span',null,'BREAK')); document.getElementById('nxPrev').appendChild(sc);
+    }
     var nxIn=document.getElementById('nxIn');
     function countdown(){ var left=Math.ceil(DWELL-(Date.now()-activeAt)/1000);
       nxIn.textContent = left>0 ? 'NEXT IN '+Math.floor(left/60)+':'+p2(left%60) : ''; }   // past the dwell (manual switching, or the hold): no number rather than a wrong one
