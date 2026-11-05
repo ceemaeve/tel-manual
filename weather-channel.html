@@ -34,6 +34,10 @@
      a card source picks up a new push. ?poll=1 brings the old fast polling back (weather and ESI every 10 min, site every
      2 min, desk every 20 s). The last reading stays up when a pull fails.
 
+     Vanguard and Frontier (Chris, 2026-11-04): /api/public/news now carries kind 'vanguard' (eveonline.com items that name
+     EVE Vanguard) and 'frontier' (evefrontier.com, read by the website app hourly). Headlines and the scroll tag them;
+     Forecast shows the newest three under the calendar, and the calendar itself lists CCP's dated events (UPCOMING, in
+     this file; past dates drop off) when nothing is typed.
      Options: ?units=f|c|both   ?speed=55 (scroll, px/s)   ?ticker=0   ?next=0   ?news=0   ?upnext=0   ?auto=0 (no calendar)   ?poll=1
               ?desk=0 (ignore the typed lines)   ?guide=1 (sample data, no outside request; ?case= picks a test case)
               ?src=manual (TEL-Manual: shows from manual.json beside the page; news skipped; weather and ESI still load)
@@ -112,6 +116,7 @@
   .tk-head{flex:none;font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:.2em;padding:2px 12px;margin:0 6px 0 10px;border:1px solid var(--pink);color:var(--pink);background:#f22dc81f}
   .tk-kind{font-family:var(--mono);font-size:26px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan)}
   .tk-kind.patch{color:var(--pink)}
+  .tk-kind.vanguard,.tk-kind.frontier{color:var(--text-mid)}
   .tk-when{font-family:var(--mono);font-size:26px;letter-spacing:.08em;color:var(--cyan)}
   .tk-tag{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.16em;padding:0 10px;border:1px solid var(--blue);color:var(--cyan);background:#1470e920}
   .tk-tag.yt{border-color:#ff3030;color:#ff8080;background:#ff30301c}
@@ -132,15 +137,21 @@
   /* Headlines and Forecast rows */
   .rows{display:flex;flex-direction:column;gap:12px;height:100%}
   .row{display:flex;align-items:center;gap:22px;min-height:52px;border-bottom:1px solid #1c2c4d88;padding-bottom:8px}
-  .row .kind{flex:none;min-width:120px;font-family:var(--mono);font-size:26px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan)}
+  .row .kind{flex:none;min-width:160px;font-family:var(--mono);font-size:26px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan)}
   .row .kind.patch{color:var(--pink)}
+  .row .kind.vanguard,.row .kind.frontier{color:var(--text-mid)}
+  .row .day .g{display:block;font-size:22px;letter-spacing:.2em;color:var(--text-dim)}
+  .rows.split{height:auto}
+  .rows.games .row{min-height:48px;padding-bottom:6px}
+  .rows.split .ev{-webkit-line-clamp:1;white-space:nowrap;text-overflow:ellipsis;display:block}   /* two blocks share the column: one line each */
   .row .when{flex:none;min-width:330px;font-family:var(--mono);font-size:28px;letter-spacing:.06em;color:var(--cyan);white-space:nowrap}
   .row .when.live{color:var(--pink)}
   .row .txt{flex:1;min-width:0;font-family:var(--body);font-weight:600;font-size:32px;color:var(--text-hi);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .row .day{flex:none;min-width:120px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono);font-size:28px;letter-spacing:.1em;text-transform:uppercase;color:var(--pink)}
   .row .ev{flex:1;min-width:0;font-family:var(--body);font-weight:600;font-size:32px;line-height:1.15;color:var(--text-mid);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .empty{font-family:var(--body);font-weight:600;font-size:34px;color:var(--text-dim)}
-  .cols{display:grid;grid-template-columns:1060px 1fr;gap:40px;height:100%}
+  .cols{display:grid;grid-template-columns:880px 1fr;gap:40px;height:100%}
+  .cols>div{min-width:0}
   .colh{font-family:var(--mono);font-size:26px;letter-spacing:.24em;text-transform:uppercase;color:var(--pink);margin-bottom:14px}
   /* Station ID */
   .station{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;text-align:center}
@@ -211,6 +222,9 @@
   var SPEED=Math.max(10,Math.min(300,parseFloat(q.get('speed'))||55));
   var SHOW_NEWS=q.get('news')!=='0'&&!MANUAL, SHOW_NEXT=q.get('upnext')!=='0'&&auto, DESK=q.get('desk')!=='0'&&!MANUAL;
   var SCENES=['conditions','outlook','hot','forecast','headlines','station'];
+  var KIND_LABEL={patch:'Patch',vanguard:'Vanguard',frontier:'Frontier'};
+  function kindClass(n){ return KIND_LABEL[n.kind]?n.kind:''; }
+  function kindLabel(n){ return KIND_LABEL[n.kind]||'News'; }
   var SCENE=q.get('scene')||'conditions'; if(SCENES.indexOf(SCENE)<0) SCENE='conditions';
   document.body.classList.add('scene-'+SCENE);
   if(GUIDE) document.body.classList.add('guide');
@@ -332,7 +346,10 @@
   function loadNews(){
     if(!SHOW_NEWS){ update(); return; }
     if(GUIDE){ news=[{kind:'patch',text:'Patch Notes - Version 23.02 - 2026-11-03',at:new Date(nowMs()-86400e3).toISOString()},{kind:'news',text:'Sample headline from the EVE news feed'},
-      {kind:'news',text:'Another headline, this one long enough to show how a wide line is cut off at the edge of the card'}]; update(); return; }
+      {kind:'news',text:'Another headline, this one long enough to show how a wide line is cut off at the edge of the card'},
+      {kind:'vanguard',text:'EVE Vanguard Alpha News and Studio Update',at:new Date(nowMs()-2*86400e3).toISOString()},
+      {kind:'frontier',text:'Can A Machine Fly The Frontier?',at:new Date(nowMs()-3*86400e3).toISOString()},
+      {kind:'frontier',text:'Patch Notes - Founder Access 0.7.5.0',at:new Date(nowMs()-5*86400e3).toISOString()}]; update(); return; }
     var c=cget('news',SITE_MS-5000); if(c){ news=c; update(); return; }
     fetch('/api/public/news',{cache:'no-store'}).then(function(r){if(!r.ok) throw 0; return r.json();}).then(function(d){
       news=(d&&Array.isArray(d.items)?d.items:[]).filter(function(n){return n&&n.text&&n.kind!=='show';}); cput('news',news); update();
@@ -376,7 +393,7 @@
       set.appendChild(el('b','tk-head','EVE News'));
       news.forEach(function(n){
         var it=el('span','tk-item');
-        it.appendChild(el('span','tk-kind '+(n.kind==='patch'?'patch':''), n.kind==='patch'?'Patch':'News'));
+        it.appendChild(el('span','tk-kind '+kindClass(n), kindLabel(n)));
         it.appendChild(document.createTextNode(n.text));
         set.appendChild(it); set.appendChild(el('i','tk-dot'));
       });
@@ -449,12 +466,16 @@
       grid.appendChild(t);
     });
   };
+  /* Dated CCP events for the New Eden Calendar when nothing is typed (Chris, 2026-11-04). ISO date, text. Past dates drop off. */
+  var UPCOMING=[['2026-11-10','Fractured Skies + Vanguard alpha, 11:00 EVE'],
+                ['2027-01-05','Military Campaign bonuses in faction systems']];
+  function dayLabel(ms){ var d=new Date(ms); return DOW[d.getUTCDay()]+' '+(d.getUTCMonth()+1)+'/'+d.getUTCDate(); }
   RENDER.headlines=function(card){
-    card.appendChild(title('EVE Online news'));
+    card.appendChild(title('EVE Online, Vanguard and Frontier'));
     var body=el('div','cbody'), rows=el('div','rows'); body.appendChild(rows); card.appendChild(body);
     var list=(news||[]).slice(0,8);
     if(!list.length){ rows.appendChild(el('div','empty','No headlines right now')); return; }
-    list.forEach(function(n){ var r=el('div','row'); r.appendChild(el('span','kind'+(n.kind==='patch'?' patch':''),n.kind==='patch'?'Patch':'News')); r.appendChild(el('span','txt',n.text)); rows.appendChild(r); });
+    list.forEach(function(n){ var r=el('div','row'); r.appendChild(el('span','kind '+kindClass(n),kindLabel(n))); r.appendChild(el('span','txt',n.text)); rows.appendChild(r); });
   };
   RENDER.forecast=function(card){
     card.appendChild(title('EVE time (UTC)'));
@@ -468,12 +489,21 @@
     right.appendChild(el('div','colh','New Eden Calendar'));
     var rr=el('div','rows'), lines=[]; right.appendChild(rr);
     ['fc1','fc2','fc3','fc4','fc5'].forEach(function(k){ var v=deskLine(k); if(v.title) lines.push([v.title,v.sub||'']); });
-    if(!lines.length){                                   // nothing typed: CCP's dated patch items, newest first, then the standing line
-      (news||[]).filter(function(n){return n.kind==='patch'&&n.at;}).slice(0,4).forEach(function(n){
-        var d=new Date(n.at); lines.push([DOW[d.getUTCDay()]+' '+(d.getUTCMonth()+1)+'/'+d.getUTCDate(), n.text.replace(/^Patch Notes\s*[-–:]\s*/i,'Patch: ')]); });
+    var games=(news||[]).filter(function(n){return n.kind==='frontier'||n.kind==='vanguard';})
+      .sort(function(a,b){return Date.parse(b.at||0)-Date.parse(a.at||0);}).slice(0,3);
+    var calMax=games.length?3:5; if(games.length) rr.className='rows split';
+    if(!lines.length){                                   // nothing typed: CCP's dated events ahead, then the dated patch items, newest first, then the standing line
+      var today=nowMs()-86400e3;
+      UPCOMING.forEach(function(u){ var at=Date.parse(u[0]+'T12:00:00Z'); if(at>=today) lines.push([dayLabel(at),u[1]]); });
+      (news||[]).filter(function(n){return n.kind==='patch'&&n.at;}).slice(0,4).forEach(function(n){ lines.push([dayLabel(Date.parse(n.at)), n.text.replace(/^Patch Notes\s*[-–:]\s*/i,'Patch: ')]); });
       lines.push(['Daily','Downtime 11:00 EVE, about 15 minutes']);
     }
-    lines.slice(0,5).forEach(function(l){ var r=el('div','row'); r.appendChild(el('span','day',l[0])); r.appendChild(el('span','ev',l[1])); rr.appendChild(r); });
+    lines.slice(0,calMax).forEach(function(l){ var r=el('div','row'); r.appendChild(el('span','day',l[0])); r.appendChild(el('span','ev',l[1])); rr.appendChild(r); });
+    if(games.length){                                    // Chris, 2026-11-04: EVE Frontier and EVE Vanguard under the calendar
+      var gh=el('div','colh','Frontier & Vanguard'); gh.style.marginTop='18px'; right.appendChild(gh);
+      var gr=el('div','rows split games'); right.appendChild(gr);
+      games.forEach(function(n){ var r=el('div','row'), d=el('span','day',n.at?dayLabel(Date.parse(n.at)):''); d.appendChild(el('span','g',n.kind)); r.appendChild(d); r.appendChild(el('span','ev',n.text)); gr.appendChild(r); });
+    }
   };
   RENDER.station=function(card){
     var st=el('div','station'); card.appendChild(st);
