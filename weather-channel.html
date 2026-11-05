@@ -18,8 +18,11 @@
                      kept clear for the music bar (pc/weather-nowplaying.html, a separate local Browser Source above this
                      page: x 60, y 56, 760 x 44).
        Card          y 110 to 760 (the plate at x 40, y 126, 1840 x 624).
-       Local strip   x 40, y 770, 1840 x 246: a hole with a frame and a LOCAL tab. The EVE client's Local chat window
-                     is a Window Capture UNDER this page, sized to the hole. ?local=0 hides the frame.
+       Coming Up     x 40, y 770, 1840 x 246 (Chris, 2026-11-04: replaces the Local chat strip): the next card in the
+                     rotation, its one-line teaser, "NEXT IN m:ss" and a live preview of it (this page at 20% in an iframe,
+                     ?mini=1, reading the shared cache; no extra pulls). The order and the time per card match
+                     tel-rotate.lua (?order=conditions,outlook,... and ?dwell=75); OBS's obsSceneChanged /
+                     obsSourceActiveChanged events restart the countdown when the scene goes live. ?next=0 hides the band.
        Scroll        y 1022 to 1080: the weather scroll from weather.html (eight cities, EVE NEWS, UP NEXT, the addresses).
 
      Scenes (?scene=):  conditions (default)  outlook  hot  forecast  headlines  station
@@ -31,7 +34,7 @@
      a card source picks up a new push. ?poll=1 brings the old fast polling back (weather and ESI every 10 min, site every
      2 min, desk every 20 s). The last reading stays up when a pull fails.
 
-     Options: ?units=f|c|both   ?speed=55 (scroll, px/s)   ?ticker=0   ?local=0   ?news=0   ?upnext=0   ?auto=0 (no calendar)   ?poll=1
+     Options: ?units=f|c|both   ?speed=55 (scroll, px/s)   ?ticker=0   ?next=0   ?news=0   ?upnext=0   ?auto=0 (no calendar)   ?poll=1
               ?desk=0 (ignore the typed lines)   ?guide=1 (sample data, no outside request; ?case= picks a test case)
               ?src=manual (TEL-Manual: shows from manual.json beside the page; news skipped; weather and ESI still load)
               ?now=2026-11-03T20:30Z (test clock) */
@@ -71,13 +74,22 @@
   .scene-station .card{background:none;border:0}
   .scene-station .card::before{display:none}
 
-  /* Local strip: the hole for the EVE chat window capture */
-  .local{position:absolute;left:40px;top:770px;width:1840px;height:246px;border:1px solid var(--edge);box-shadow:0 0 0 1px #35d6ff22 inset}
-  .local .tab{position:absolute;left:-1px;top:-1px;padding:4px 16px;background:#03060ecc;border:1px solid var(--edge);border-bottom-color:transparent;
-    font-family:var(--mono);font-size:26px;letter-spacing:.24em;text-transform:uppercase;color:var(--cyan);line-height:1.2}
-  .local .ph{display:none;position:absolute;inset:0;align-items:center;justify-content:center;font-family:var(--mono);font-size:28px;letter-spacing:.2em;color:#7a89ad;outline:2px dashed #35d6ff66;outline-offset:-14px}
-  .guide .local .ph{display:flex}
-  .nolocal .local{display:none}
+  /* Coming Up band: the next card in the rotation, with a live preview of it */
+  .next{position:absolute;left:40px;top:770px;width:1840px;height:246px;padding:15px 40px 15px 40px;
+    background:linear-gradient(180deg,#101a32f2,#060b1af5);border:1px solid var(--edge);display:flex;align-items:center;gap:40px;overflow:hidden}
+  .next::before{content:"";position:absolute;left:0;top:26px;bottom:26px;width:5px;background:var(--cyan);box-shadow:0 0 18px #35d6ffaa}
+  .nx-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:14px}
+  .nx-label{font-family:var(--mono);font-size:26px;letter-spacing:.24em;text-transform:uppercase;color:var(--cyan)}
+  .nx-title{font-family:var(--display);font-weight:800;font-size:52px;letter-spacing:.06em;color:var(--text-hi);line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nx-teaser{font-family:var(--body);font-weight:600;font-size:30px;color:var(--text-mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nx-in{flex:none;min-width:300px;text-align:right;font-family:var(--mono);font-size:30px;letter-spacing:.14em;color:var(--pink);white-space:nowrap}
+  .nx-in:empty{display:none}
+  .nx-prev{flex:none;position:relative;width:384px;height:216px;border:1px solid var(--edge);box-shadow:0 0 0 1px #35d6ff22 inset;background:var(--void);overflow:hidden}
+  .nx-prev iframe{position:absolute;left:0;top:0;width:1920px;height:1080px;border:0;transform:scale(.2);transform-origin:0 0;pointer-events:none;background:var(--void)}
+  .nx-prev .tag{position:absolute;right:0;bottom:0;padding:2px 10px;background:#03060ecc;border-top:1px solid var(--edge);border-left:1px solid var(--edge);
+    font-family:var(--mono);font-size:26px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-dim);line-height:1.2}
+  .nonext .next{display:none}
+  .mini .nx-prev .tag,.mini .musicph{display:none}
 
   /* the scroll along the bottom, as on weather.html but full width */
   .ticker{position:absolute;left:0;top:1022px;width:1920px;height:58px;display:flex;align-items:center;
@@ -184,7 +196,11 @@
 
   <div class="card chamfer" id="card"></div>
 
-  <div class="local" id="local"><div class="tab">Local</div><div class="ph">LOCAL CHAT WINDOW CAPTURE 1840 × 246</div></div>
+  <div class="next chamfer" id="next">
+    <div class="nx-text"><div class="nx-label">Coming up</div><div class="nx-title" id="nxTitle"></div><div class="nx-teaser" id="nxTeaser"></div></div>
+    <div class="nx-in" id="nxIn"></div>
+    <div class="nx-prev" id="nxPrev"><div class="tag">Preview</div></div>
+  </div>
 
   <div class="ticker" id="ticker"><div class="tk-label">EVE Weather</div><div class="tk-win" id="tkWin"><div class="tk-track" id="tkTrack"></div></div></div>
 </div>
@@ -199,7 +215,8 @@
   document.body.classList.add('scene-'+SCENE);
   if(GUIDE) document.body.classList.add('guide');
   if(q.get('ticker')==='0') document.body.classList.add('noticker');
-  if(q.get('local')==='0') document.body.classList.add('nolocal');
+  var MINI=q.get('mini')==='1'; if(MINI) document.body.classList.add('mini');
+  if(q.get('next')==='0'||q.get('local')==='0') document.body.classList.add('nonext');
   function fit(){
     var s=Math.min(innerWidth/1920,innerHeight/1080), st=document.getElementById('stage');
     st.style.transform = Math.abs(s-1)>.001 ? 'scale('+s+')' : '';
@@ -214,7 +231,7 @@
   var HOLD_MS=30*60*1000, LEAD_MS=90*60*1000;
   var TEST_NOW=q.get('now')?Date.parse(q.get('now')):NaN, CLOCK_OFF=isNaN(TEST_NOW)?0:TEST_NOW-Date.now();
   function nowMs(){return Date.now()+CLOCK_OFF;}
-  if(!isNaN(TEST_NOW)){
+  if(!isNaN(TEST_NOW)&&!MINI){
     var tb=document.createElement('div');
     tb.style.cssText='position:fixed;top:12px;left:900px;z-index:99;padding:8px 14px;background:#ffb648;color:#1a1000;font:700 22px/1 Consolas,monospace;letter-spacing:.06em';
     var tick=function(){tb.textContent='TEST CLOCK '+new Date(nowMs()).toISOString().slice(0,16).replace('T',' ')+' UTC';};
@@ -409,8 +426,11 @@
   }
   function update(){ buildTicker(); render(); }
 
-  loadWx(); loadNews(); loadShows(); loadDesk();
-  if(POLL) setTimeout(function(){ setInterval(loadWx,WX_MS); setInterval(loadNews,SITE_MS); setInterval(loadShows,SITE_MS); setInterval(loadDesk,DESK_MS); },JIT);
+  if(MINI&&!GUIDE){                                      // the preview frame never fetches: it reads what the pages wrote and follows their updates
+    addEventListener('storage',function(){ wx=cany('wx')||wx; news=cany('news')||news; shows=cany('shows')||shows; esi=cany('esi')||esi; var d=cany('desk'); if(d&&typeof d==='object') desk=d; update(); });
+    update();
+  } else { loadWx(); loadNews(); loadShows(); loadDesk(); }
+  if(MINI&&!GUIDE){} else if(POLL) setTimeout(function(){ setInterval(loadWx,WX_MS); setInterval(loadNews,SITE_MS); setInterval(loadShows,SITE_MS); setInterval(loadDesk,DESK_MS); },JIT);
   else setTimeout(function(){ setInterval(loadWx,RECHECK_MS); },JIT);   // every 5 min: takes the shared reading, fetches only once it is an hour old
   if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ tkSig=null; cardSig=null; update(); });   // re-measure once the fonts are in
 
@@ -545,7 +565,32 @@
   if(GUIDE&&CASE==='esidown'){ desk={}; DESK=false; }
   if(GUIDE&&CASE==='typedonly'){ desk={hot1:{title:'Jita',sub:'Heavy scams, 90% chance of gank'}}; DESK=false; }
   if(GUIDE&&CASE==='long'){ var L=new Array(21).join('Long line '); desk.outlook={title:L,sub:''}; desk.hot1={title:'Jita',sub:L}; DESK=false; }
-  loadEsi(); if(POLL) setInterval(loadEsi,ESI_MS); else setTimeout(function(){ setInterval(loadEsi,RECHECK_MS); },JIT);
+  if(MINI&&!GUIDE){ update(); } else { loadEsi(); if(POLL) setInterval(loadEsi,ESI_MS); else setTimeout(function(){ setInterval(loadEsi,RECHECK_MS); },JIT); }
+
+  /* ---------- Coming Up band (Chris, 2026-11-04): the next card, its teaser, a countdown and a live preview ---------- */
+  var TEASERS={conditions:'Eight cities at a glance, San Francisco to Sydney.',outlook:'Pilots online, Tranquility status and the forecaster\'s note.',
+    hot:'The five systems with the most ship kills in the last hour.',forecast:'Patch days, downtime and the next This EVE Life shows.',
+    headlines:'The latest from the EVE Online news desk.',station:'You are watching This EVE Weather Channel.'};
+  var OBS_NAMES={'Conditions':'conditions','Outlook':'outlook','Hot Systems':'hot','Forecast':'forecast','Headlines':'headlines','Station ID':'station'};
+  var ORDER=(q.get('order')||'').split(',').filter(function(k){return SCENES.indexOf(k)>=0;}); if(ORDER.length<2) ORDER=SCENES.slice();
+  var DWELL=Math.max(5,Math.min(3600,parseInt(q.get('dwell'),10)||75));
+  function nextOf(k){ var i=ORDER.indexOf(k); return ORDER[i+1]||ORDER[0]; }   // off the list: the rotation rejoins at the first card
+  var NEXT=nextOf(SCENE), activeAt=Date.now();
+  if(!document.body.classList.contains('nonext')){
+    document.getElementById('nxTitle').textContent=TITLES[NEXT];
+    document.getElementById('nxTeaser').textContent=TEASERS[NEXT];
+  }
+  if(!MINI&&!document.body.classList.contains('nonext')){   // the preview frame shows its band as text only: no frame inside a frame, no countdown
+    var pf=document.createElement('iframe'); pf.setAttribute('title','Preview of '+TITLES[NEXT]); pf.setAttribute('aria-hidden','true');
+    var pq=new URLSearchParams(location.search); pq.set('scene',NEXT); pq.set('mini','1'); pq.delete('next'); pq.delete('local'); pq.delete('poll');
+    pf.src=location.pathname+'?'+pq.toString(); document.getElementById('nxPrev').appendChild(pf);
+    var nxIn=document.getElementById('nxIn');
+    function countdown(){ var left=Math.ceil(DWELL-(Date.now()-activeAt)/1000);
+      nxIn.textContent = left>0 ? 'NEXT IN '+Math.floor(left/60)+':'+p2(left%60) : ''; }   // past the dwell (manual switching, or the hold): no number rather than a wrong one
+    countdown(); setInterval(countdown,1000);
+    addEventListener('obsSceneChanged',function(e){ if(e&&e.detail&&OBS_NAMES[e.detail.name]===SCENE){ activeAt=Date.now(); countdown(); } });
+    addEventListener('obsSourceActiveChanged',function(e){ if(e&&e.detail&&e.detail.active){ activeAt=Date.now(); countdown(); } });
+  }
   /*CARD-JS*/
 </script>
 </body>
