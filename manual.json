@@ -1,9 +1,9 @@
 {
-  "updated": "2026-11-06T04:59:58Z",
+  "updated": "2026-11-06T23:56:18Z",
   "source": "discord",
   "nextShows": [
     {
-      "name": "FRESH BLOOD IN NEW EDEN PT. 4 W/ BEEFINSPACE (EP 54)",
+      "name": "FRESH BLOOD IN NEW EDEN PT. 4 W/ BEEFINSPACE | THIS EVE LIFE EPISODE #54",
       "desc": "New Player to EVE BeefInSpace joins me on the show to discuss EVE Online, their entrance into our universe and why they plan on staying!",
       "at": "2026-11-07T03:00:00.000Z",
       "endAt": "2026-11-07T04:00:00.000Z",
@@ -12,7 +12,7 @@
       ]
     },
     {
-      "name": "THE MINER WARRIORS OF NULLSEC: RIOTRICK OF SLYCE ALLIANCE | EVE ONLINE (EP 38)",
+      "name": "THE MINER WARRIORS OF NULLSEC: RIOTRICK OF SLYCE ALLIANCE | EVE ONLINE | THIS EVE LIFE EPISODE #55",
       "desc": "Don't let their size fool you, SLYCE has proven time and time again to be capable industrialists, miners, and the backbone of any fleet …",
       "at": "2026-11-07T22:00:00.000Z",
       "endAt": "2026-11-07T23:00:00.000Z",
@@ -21,13 +21,22 @@
       ]
     },
     {
-      "name": "INTERVIEW W/ LAURA KARPINSKI & NOPE (EP 47)",
+      "name": "INTERVIEW W/ LAURA KARPINSKI OF EVE UNIVERSITY | THIS EVE LIFE EPISODE #56",
       "desc": "Getting new players over the learning cliff",
       "at": "2026-11-08T21:00:00.000Z",
       "endAt": "2026-11-08T22:00:00.000Z",
       "guests": [
         "Laura Karpinski",
         "Nope"
+      ]
+    },
+    {
+      "name": "ROLLING FOR THE INITIATIVE W/ DARK SHINES | EVE ONLINE | THIS EVE LIFE EPISODE #57",
+      "desc": "Dark Shines joins me on the show to talk about The Initiative, what it's like leading a skill based alliance, and what being a nuetral …",
+      "at": "2026-11-14T22:00:00.000Z",
+      "endAt": "2026-11-14T23:00:00.000Z",
+      "guests": [
+        "Dark Shines"
       ]
     }
   ]
