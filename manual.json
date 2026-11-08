@@ -1,16 +1,7 @@
 {
-  "updated": "2026-11-07T04:54:58Z",
+  "updated": "2026-11-08T00:00:14Z",
   "source": "discord",
   "nextShows": [
-    {
-      "name": "THE MINER WARRIORS OF NULLSEC: RIOTRICK OF SLYCE ALLIANCE | EVE ONLINE | THIS EVE LIFE EPISODE #55",
-      "desc": "Don't let their size fool you, SLYCE has proven time and time again to be capable industrialists, miners, and the backbone of any fleet …",
-      "at": "2026-11-07T22:00:00.000Z",
-      "endAt": "2026-11-07T23:00:00.000Z",
-      "guests": [
-        "RiotRick"
-      ]
-    },
     {
       "name": "INTERVIEW W/ LAURA KARPINSKI OF EVE UNIVERSITY | THIS EVE LIFE EPISODE #56",
       "desc": "Getting new players over the learning cliff",
@@ -28,6 +19,16 @@
       "endAt": "2026-11-14T23:00:00.000Z",
       "guests": [
         "Dark Shines"
+      ]
+    },
+    {
+      "name": "EVE ONLINE NULLBLOC FINANCES EXPLAINED W/ BEYONDNOXX UNP AND NEEMAHS | THIS EVE LIFE EPISODE #58",
+      "desc": "Beyondnoxx UNP aka \"Beyond\" joins me on the show to talk ISK, Alliance Assets, and what it takes to be the CFO of Goonswarm Federation, the …",
+      "at": "2026-11-15T22:00:00.000Z",
+      "endAt": "2026-11-15T23:00:00.000Z",
+      "guests": [
+        "Beyondnoxx UNP",
+        "Neemahs"
       ]
     }
   ]
