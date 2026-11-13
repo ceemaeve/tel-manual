@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-08T22:20:14Z",
+  "updated": "2026-11-13T23:27:27Z",
   "source": "discord",
   "nextShows": [
     {
@@ -19,6 +19,15 @@
       "guests": [
         "Beyondnoxx UNP",
         "Neemahs"
+      ]
+    },
+    {
+      "name": "REVENGE SERVED WITH EXPLOSIONS: HULTAJI GOGIKO | EVE ONLINE | THIS EVE LIFE EPISODE #59",
+      "desc": "Hultaji Gogiko had had an epic set of adventures in EVE online extracting over 2 Trillion in loses to both Pandemic Horde and Goonswarm …",
+      "at": "2026-11-21T19:00:00.000Z",
+      "endAt": "2026-11-21T20:00:00.000Z",
+      "guests": [
+        "Hultaji Gogiko"
       ]
     }
   ]
