@@ -30,7 +30,7 @@ if (-not $Out) { $Out = Join-Path (Split-Path -Parent (Resolve-Path $Export)) 'T
 $json = Get-Content -LiteralPath $Export -Raw -Encoding UTF8
 $doc = $json | ConvertFrom-Json
 
-# 1. Rewrite overlay URLs (avatar.html included) and find the Election and Month sources.
+# 1. Rewrite overlay URLs (avatar.html included) and find the Month source.
 $rx = [regex]'^(?:https?://)?(?:www\.)?thisevelife\.space/overlay/([A-Za-z0-9_-]+\.html)(?:\?(.*))?$'
 $dropSources = New-Object System.Collections.Generic.List[string]
 $rewritten = 0
@@ -39,7 +39,7 @@ foreach ($s in $doc.sources) {
   $m = $rx.Match($s.settings.url)
   if (-not $m.Success) { continue }
   $page = $m.Groups[1].Value
-  if ($page -ieq 'election.html' -or $page -ieq 'month.html') { $dropSources.Add($s.name); continue }
+  if ($page -ieq 'month.html') { $dropSources.Add($s.name); continue }
   $q = 'src=manual'
   if ($m.Groups[2].Success -and $m.Groups[2].Value) { $q = 'src=manual&' + $m.Groups[2].Value }
   $s.settings.url = "$ManualBase$page`?$q"

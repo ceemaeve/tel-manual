@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800;900&family=Rajdhani:wght@600;700&family=Share+Tech+Mono&display=swap">
 <style>
   /* OBS Browser Source: 1920 x 1080. This EVE Weather Channel, the TEL-Weather scene pack (added 2026-11-03): a silent
-     Twitch show in the style of the 1990s weather channel. Six data cards, one per OBS scene, picked with ?scene=;
+     Twitch show in the style of the 1990s weather channel. Seven data cards, one per OBS scene, picked with ?scene=;
      Chris switches them from the Stream Deck. No camera, no presenter, no system name. Spec:
      docs/superpowers/specs/2026-11-03-tel-weather-design.md. Setup: tel-weather/README.md.
 
@@ -21,15 +21,16 @@
        Coming Up     x 40, y 770, 1840 x 246 (Chris, 2026-11-04: replaces the Local chat strip): the next card in the
                      rotation, its one-line teaser, "NEXT IN m:ss" and a live preview of it (this page at 20% in an iframe,
                      ?mini=1, reading the shared cache; no extra pulls). The order and the time per card match
-                     tel-rotate.lua (default Station ID, Conditions, Outlook, Hot Systems, Forecast, Headlines; ?order=station,conditions,... and ?dwell=75); OBS's obsSceneChanged /
+                     tel-rotate.lua (default Station ID, Conditions, Outlook, Hot Systems, Casualty Report, Forecast, Headlines; ?order=station,conditions,... and ?dwell=75); OBS's obsSceneChanged /
                      obsSourceActiveChanged events restart the countdown when the scene goes live. ?next=0 hides the band.
        Scroll        y 1022 to 1080: the weather scroll from weather.html (eight cities, EVE NEWS, UP NEXT, the addresses).
 
-     Scenes (?scene=):  conditions (default)  outlook  hot  forecast  headlines  station
-     Data: each source is pulled when the first card page opens and the reading is shared by all six scenes (localStorage).
+     Scenes (?scene=):  conditions (default)  outlook  hot  losses  forecast  headlines  station
+     Data: each source is pulled when the first card page opens and the reading is shared by all the card scenes (localStorage).
      Weather (Open-Meteo, one request for the eight cities) and ESI (status, system_kills, system_jumps, names) are pulled
      again every hour while a card page is open (Chris, 2026-11-03: hot systems and weather every hour, not
-     the forecast and headlines). /api/public/news, the calendar and the patch dates are pulled once for the evening
+     the forecast and headlines). The Casualty Report (Chris, 2026-11-07) takes /api/public/losses once an hour too: the
+     website app does the zKillboard round and keeps it an hour. /api/public/news, the calendar and the patch dates are pulled once for the evening
      (12 hours). /api/weather (the lines Chris types on the Ceema Plays desk) has a 20 s copy, so right-click > Refresh on
      a card source picks up a new push. ?poll=1 brings the old fast polling back (weather and ESI every 10 min, site every
      2 min, desk every 20 s). The last reading stays up when a pull fails.
@@ -197,6 +198,22 @@
   .hrow .num{font-family:var(--display);font-weight:700;font-size:36px;text-align:right;white-space:nowrap}
   .hot.many .sys b{font-size:34px} .hot.many .sys i{font-size:26px} .hot.many .num{font-size:30px}
   .hrow .num.k{color:var(--pink)} .hrow .num.p{color:var(--text-dim)} .hrow .num.j{color:var(--cyan)}
+  /* Casualty Report (Chris, 2026-11-07): the five biggest losses of the last day, zKillboard's appraisal */
+  .loss{display:flex;flex-direction:column;height:100%;min-height:0}
+  .lrow{display:grid;grid-template-columns:70px 92px 1fr 330px 200px 300px;gap:18px;align-items:center;flex:1 1 0;min-height:0;border-bottom:1px solid #1c2c4d88}
+  .lrow.head{flex:none;padding:0 0 6px;border-bottom:1px solid var(--edge)}
+  .lrow.head span{font-family:var(--mono);font-size:26px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-dim);text-align:right}
+  .lrow.head span:nth-child(2),.lrow.head span:nth-child(3),.lrow.head span:nth-child(4){text-align:left}
+  .lrow .rk{font-family:var(--mono);font-size:30px;color:var(--text-dim)}
+  .lrow .render{width:84px;height:84px;background:#0b142866;border:1px solid var(--edge);overflow:hidden;display:flex;align-items:center;justify-content:center}
+  .lrow .render img{width:100%;height:100%;display:block;object-fit:cover}
+  .lrow .render.none{opacity:.3}
+  .lrow .who{min-width:0;display:flex;flex-direction:column;gap:4px}
+  .lrow .who b{font-family:var(--body);font-weight:700;font-size:44px;line-height:1;color:var(--text-hi);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lrow .who i{font-style:normal;font-family:var(--body);font-weight:600;font-size:30px;line-height:1;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lrow .where{min-width:0;font-family:var(--body);font-weight:600;font-size:34px;color:var(--text-mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lrow .ago{font-family:var(--mono);font-size:28px;letter-spacing:.06em;color:var(--cyan);text-align:right;white-space:nowrap}
+  .lrow .isk{font-family:var(--display);font-weight:700;font-size:40px;color:var(--pink);text-align:right;white-space:nowrap}
   /*CARD-CSS*/
 </style>
 </head>
@@ -224,7 +241,7 @@
   var UNITS=(q.get('units')||'both').toLowerCase(); if(UNITS!=='f'&&UNITS!=='c') UNITS='both';
   var SPEED=Math.max(10,Math.min(300,parseFloat(q.get('speed'))||55));
   var SHOW_NEWS=q.get('news')!=='0'&&!MANUAL, SHOW_NEXT=q.get('upnext')!=='0'&&auto, DESK=q.get('desk')!=='0'&&!MANUAL;
-  var SCENES=['conditions','outlook','hot','forecast','headlines','station'];
+  var SCENES=['conditions','outlook','hot','losses','forecast','headlines','station'];
   var KIND_LABEL={patch:'Patch',vanguard:'Vanguard',frontier:'Frontier'};
   function kindClass(n){ return KIND_LABEL[n.kind]?n.kind:''; }
   function kindLabel(n){ return KIND_LABEL[n.kind]||'News'; }
@@ -278,9 +295,9 @@
     +'&longitude='+CITIES.map(function(c){return c[2];}).join(',')+'&current=temperature_2m,weather_code,is_day&timezone=auto';
   var POLL=q.get('poll')==='1', DAY_MS=12*3600*1000, LIVE_MS=60*60*1000, RECHECK_MS=5*60*1000;
   var WX_MS=POLL?10*60*1000:LIVE_MS, SITE_MS=POLL?2*60*1000:DAY_MS, DESK_MS=20*1000;
-  var wx=null, news=null, shows=null, desk={}, esi=null;
+  var wx=null, news=null, shows=null, desk={}, esi=null, losses=null;
 
-  /* The six card pages share one browser profile in OBS, so a reading one page fetched serves the others:
+  /* The card pages share one browser profile in OBS, so a reading one page fetched serves the others:
      each pull is kept in localStorage with its time, a page takes a reading younger than its interval instead
      of fetching again, and a reload (a scene switch with refresh on, or a crash) starts with the last reading. */
   var CK='telweather.', JIT=Math.floor(Math.random()*4000);
@@ -291,7 +308,7 @@
     try{ var t=+localStorage.getItem(CK+k+'.lock')||0; if(Date.now()-t<30000) return false; localStorage.setItem(CK+k+'.lock',String(Date.now())); }catch(e){}
     return true;
   }
-  if(!GUIDE){ wx=cany('wx'); news=cany('news'); shows=cany('shows'); esi=cany('esi'); var d0=cany('desk'); if(d0&&typeof d0==='object') desk=d0; }
+  if(!GUIDE){ wx=cany('wx'); news=cany('news'); shows=cany('shows'); esi=cany('esi'); losses=cany('losses'); var d0=cany('desk'); if(d0&&typeof d0==='object') desk=d0; }
 
   // WMO weather codes -> [glyph, words]. Open-Meteo documents the codes on its forecast API page.
     var G={
@@ -431,7 +448,7 @@
   }
 
   /* ---------- the cards ---------- */
-  var TITLES={conditions:'Current Conditions',outlook:'New Eden Outlook',hot:'Hot Systems',forecast:'Extended Forecast',headlines:'Headlines',station:'Station ID'};
+  var TITLES={conditions:'Current Conditions',outlook:'New Eden Outlook',hot:'Hot Systems',losses:'Casualty Report',forecast:'Extended Forecast',headlines:'Headlines',station:'Station ID'};
   var RENDER={};
   function title(sub){ var t=el('div','ct',TITLES[SCENE]); if(sub) t.appendChild(el('small',null,sub)); return t; }
   function asOf(ms){ var d=new Date(ms); return 'as of '+p2(d.getUTCHours())+':'+p2(d.getUTCMinutes())+' EVE'; }
@@ -440,14 +457,14 @@
   var cardSig=null;
   function render(){
     var card=document.getElementById('card');
-    var key=JSON.stringify([SCENE,wx,news,shows,desk,esi]);
+    var key=JSON.stringify([SCENE,wx,news,shows,desk,esi,losses]);
     if(key===cardSig) return; cardSig=key;
     card.textContent=''; (RENDER[SCENE]||stub)(card);
   }
   function update(){ buildTicker(); render(); }
 
   if(MINI&&!GUIDE){                                      // the preview frame never fetches: it reads what the pages wrote and follows their updates
-    addEventListener('storage',function(){ wx=cany('wx')||wx; news=cany('news')||news; shows=cany('shows')||shows; esi=cany('esi')||esi; var d=cany('desk'); if(d&&typeof d==='object') desk=d; update(); });
+    addEventListener('storage',function(){ wx=cany('wx')||wx; news=cany('news')||news; shows=cany('shows')||shows; esi=cany('esi')||esi; losses=cany('losses')||losses; var d=cany('desk'); if(d&&typeof d==='object') desk=d; update(); });
     update();
   } else { loadWx(); loadNews(); loadShows(); loadDesk(); }
   if(MINI&&!GUIDE){} else if(POLL) setTimeout(function(){ setInterval(loadWx,WX_MS); setInterval(loadNews,SITE_MS); setInterval(loadShows,SITE_MS); setInterval(loadDesk,DESK_MS); },JIT);
@@ -600,15 +617,60 @@
   if(GUIDE&&CASE==='long'){ var L=new Array(21).join('Long line '); desk.outlook={title:L,sub:''}; desk.hot1={title:'Jita',sub:L}; DESK=false; }
   if(MINI&&!GUIDE){ update(); } else { loadEsi(); if(POLL) setInterval(loadEsi,ESI_MS); else setTimeout(function(){ setInterval(loadEsi,RECHECK_MS); },JIT); }
 
+  /* ---------- Casualty Report (Chris, 2026-11-07): the five biggest losses of the last day ----------
+     /api/public/losses: the website app asks zKillboard per ship group (capitals, haulers, the bling hulls;
+     lib/losses.mjs) and names the ids through ESI, and keeps the answer an hour, so every card page and the
+     preview share one round. Taken here once an hour like the ESI reading; a failed pull keeps the last list. */
+  function fmtIsk(v){ v=+v||0; if(v>=1e9) return (v/1e9).toFixed(v<10e9?2:1)+'B'; if(v>=1e6) return Math.round(v/1e6)+'M'; return fmt(Math.round(v)); }
+  function agoOf(iso){ var m=Math.round((nowMs()-Date.parse(iso))/60000); if(!isFinite(m)||m<0) return ''; if(m<60) return m+'m ago'; var h=Math.floor(m/60); return h<24?h+'h '+p2(m%60)+'m ago':Math.floor(h/24)+'d ago'; }
+  function loadLosses(){
+    if(GUIDE){
+      if(CASE==='esidown'){ losses=null; update(); return; }
+      var n=nowMs(), sample=[[52907,'Zirnitra','Vexa Orlane','Hollow Reach Industries','Driftwood Coalition','J123456',11106603791,7],
+        [19726,'Phoenix','Marrow Teng','Ninth Circle Logistics','','Tama',9393221458,2],[28844,'Rhea','Ilsa Vantrell','Blue Comet Freight','Driftwood Coalition','Uedama',8120456020,5],
+        [23773,'Ragnarok','','Hollow Reach Industries','Driftwood Coalition','1DQ1-A',7854000111,11],[28665,'Vargur','Cassian Dree','Lone Signal','','Amamake',6210987654,1]];
+      if(CASE==='long'){ sample[0][1]='Capital Industrial Ship With A Long Name'; sample[0][2]='A Pilot Whose Name Runs Right Off The Column'; sample[0][5]='A Solar System Name That Is Too Long'; }
+      losses={at:new Date(n-25*60000).toISOString(),items:sample.map(function(r,i){return {rank:i+1,shipTypeId:r[0],ship:r[1],pilot:r[2],corp:r[3],alliance:r[4],system:r[5],value:r[6],time:new Date(n-r[7]*3600e3).toISOString()};})};
+      update(); return;
+    }
+    var c=cget('losses',LIVE_MS-5000); if(c){ losses=c; update(); return; }
+    if(!claim('losses')){ update(); return; }
+    fetch('/api/public/losses',{cache:'no-store'}).then(function(r){if(!r.ok) throw 0; return r.json();}).then(function(d){
+      var items=(d&&Array.isArray(d.items)?d.items:[]).filter(function(x){return x&&x.ship;});
+      if(items.length){ losses={at:d.fetchedAt||new Date(nowMs()).toISOString(),items:items.slice(0,5)}; cput('losses',losses); }   // empty: zKill is down, keep the last list
+      update();
+    }).catch(update);
+  }
+  RENDER.losses=function(card){
+    card.appendChild(title(losses?'Last 24 hours · zKillboard · '+asOf(Date.parse(losses.at)):'Last 24 hours · zKillboard'));
+    var body=el('div','cbody'), t=el('div','loss'); body.appendChild(t); card.appendChild(body);
+    var rows=losses?losses.items:[];
+    if(!rows.length){ t.appendChild(el('div','empty','Waiting for the killboard')); return; }
+    var h=el('div','lrow head'); ['#','','Loss','System','When','Value'].forEach(function(x){h.appendChild(el('span',null,x));}); t.appendChild(h);
+    rows.forEach(function(r,i){
+      var row=el('div','lrow'); row.appendChild(el('span','rk',String(i+1)));
+      var rd=el('div','render'+(r.shipTypeId?'':' none'));
+      if(r.shipTypeId&&!GUIDE){ var img=document.createElement('img'); img.alt=''; img.src='https://images.evetech.net/types/'+r.shipTypeId+'/render?size=128'; img.onerror=function(){ rd.classList.add('none'); img.remove(); }; rd.appendChild(img); }
+      row.appendChild(rd);
+      var who=el('div','who'); who.appendChild(el('b',null,r.ship));
+      var sub=[r.pilot,r.corp].filter(Boolean).join(' · ')+(r.alliance?' ['+r.alliance+']':''); if(sub) who.appendChild(el('i',null,sub)); row.appendChild(who);
+      row.appendChild(el('span','where',r.system||''));
+      row.appendChild(el('span','ago',agoOf(r.time)));
+      row.appendChild(el('span','isk',fmtIsk(r.value)+' ISK'));
+      t.appendChild(row);
+    });
+  };
+  if(MINI&&!GUIDE){ update(); } else { loadLosses(); if(POLL) setInterval(loadLosses,LIVE_MS); else setTimeout(function(){ setInterval(loadLosses,RECHECK_MS); },JIT); }
+
   /* ---------- Coming Up band (Chris, 2026-11-04): the next card, its teaser, a countdown and a live preview ---------- */
   var TEASERS={conditions:'Eight cities at a glance, San Francisco to Sydney.',outlook:'Pilots online, Tranquility status and the forecaster\'s note.',
-    hot:'The five systems with the most ship kills in the last hour.',forecast:'Patch days, downtime and the next This EVE Life shows.',
+    hot:'The five systems with the most ship kills in the last hour.',losses:'The five most expensive ways to lose a ship in the last day.',forecast:'Patch days, downtime and the next This EVE Life shows.',
     headlines:'The latest from the EVE Online news desk.',station:'You are watching This EVE Weather Channel.',
     commercials:'A word from our sponsors. Back in about a minute.'};
   var STEP_TITLES={commercials:'Commercial Break'};
-  var OBS_NAMES={'Conditions':'conditions','Outlook':'outlook','Hot Systems':'hot','Forecast':'forecast','Headlines':'headlines','Station ID':'station','Commercials':'commercials'};
-  var STEPS=SCENES.concat(['commercials']);          // rotation steps: the six cards plus the Commercials scene (a VLC source in OBS, no page; Chris, 2026-11-04)
-  var DEFAULT_ORDER=['station','conditions','outlook','hot','forecast','headlines','commercials'];   // tel-rotate.lua's default list
+  var OBS_NAMES={'Conditions':'conditions','Outlook':'outlook','Hot Systems':'hot','Casualty Report':'losses','Forecast':'forecast','Headlines':'headlines','Station ID':'station','Commercials':'commercials'};
+  var STEPS=SCENES.concat(['commercials']);          // rotation steps: the seven cards plus the Commercials scene (a VLC source in OBS, no page; Chris, 2026-11-04)
+  var DEFAULT_ORDER=['station','conditions','outlook','commercials','hot','losses','commercials','forecast','headlines','commercials'];   // tel-rotate.lua's default list (three breaks, Chris, 2026-11-08); every card is listed once, so nextOf() is unambiguous
   var ORDER=(q.get('order')||'').split(',').filter(function(k){return STEPS.indexOf(k)>=0;}); if(ORDER.length<2) ORDER=DEFAULT_ORDER.slice();
   var DWELL=Math.max(5,Math.min(3600,parseInt(q.get('dwell'),10)||75));
   function nextOf(k){ var i=ORDER.indexOf(k); return ORDER[i+1]||ORDER[0]; }   // off the list: the rotation rejoins at the first card
