@@ -1,18 +1,9 @@
 {
-  "updated": "2026-11-13T23:27:27Z",
+  "updated": "2026-11-15T01:00:28Z",
   "source": "discord",
   "nextShows": [
     {
-      "name": "ROLLING FOR THE INITIATIVE W/ DARK SHINES | EVE ONLINE | THIS EVE LIFE EPISODE #57",
-      "desc": "Dark Shines joins me on the show to talk about The Initiative, what it's like leading a skill based alliance, and what being a nuetral …",
-      "at": "2026-11-14T22:00:00.000Z",
-      "endAt": "2026-11-14T23:00:00.000Z",
-      "guests": [
-        "Dark Shines"
-      ]
-    },
-    {
-      "name": "EVE ONLINE NULLBLOC FINANCES EXPLAINED W/ BEYONDNOXX UNP AND NEEMAHS | THIS EVE LIFE EPISODE #58",
+      "name": "EVE ONLINE NULLBLOC FINANCES EXPLAINED W/ BEYONDNOXX UNP & NEMAHS AIDERO | THIS EVE LIFE EPISODE #58",
       "desc": "Beyondnoxx UNP aka \"Beyond\" joins me on the show to talk ISK, Alliance Assets, and what it takes to be the CFO of Goonswarm Federation, the …",
       "at": "2026-11-15T22:00:00.000Z",
       "endAt": "2026-11-15T23:00:00.000Z",
@@ -28,6 +19,15 @@
       "endAt": "2026-11-21T20:00:00.000Z",
       "guests": [
         "Hultaji Gogiko"
+      ]
+    },
+    {
+      "name": "EVE ONLINE LOWSEC EDUCATION W/ YOUNGPUKE2 | THIS EVE LIFE EPISODE #60",
+      "desc": "YoungPuke2, the most famous Lowsec CSM Ever, joins me on the show to educate me on how Lowsec works, who are the major movers and shakers,  …",
+      "at": "2026-11-22T22:00:00.000Z",
+      "endAt": "2026-11-22T23:00:00.000Z",
+      "guests": [
+        "YoungPuke2"
       ]
     }
   ]
