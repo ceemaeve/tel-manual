@@ -1,76 +1,79 @@
-# TEL-Manual: the backup stream
+# TELM-Manual: the backup stream
 
-Two ways to run a This EVE Life stream. Pick one before the show starts.
+TELM-Manual is the server-free copy of TELM-Auto. You switch to it when TEL-SVS-01 or thisevelife.space is down,
+or when the Discord feed shows the wrong show. It looks the same and uses the same scenes and Stream Deck keys.
 
-| | Automatic (TEL-Auto) | Manual (TEL-Manual) |
+| | Automatic (TELM-Auto) | Manual (TELM-Manual) |
 | --- | --- | --- |
-| Use it when | The VPS and thisevelife.space are up | thisevelife.space is down, the feed is wrong, or you want nothing automatic |
-| Overlay pages come from | thisevelife.space/overlay/ (VPS) | ceemaeve.github.io/tel-manual/ (GitHub Pages) |
-| Today, Next Episode, guest plates | Discord events through /api/public/feed | manual.json, filled from the same Discord events every 15 minutes by the TEL-Manual feed run on GitHub (no VPS involved); the editor is the override |
-| Guest avatars | On, from the feed | On, from manual.json (portraits come from CCP, not the VPS; a guest with no exact EVE name shows the logo) |
-| Speaking glow, Up Next from Discord | On | Off (Up Next reads manual.json) |
-| Credits names, music, bumper | VPS files | credits-names.txt, credits/music.mp3 and credits/bumper.mp4 in the tel-manual repo (copied there from the stream PC) |
-| Pre-show music, Now Playing, Countdown, alerts, Stream Deck | Local to the PC | Same, unchanged |
-| OBS scene collection | TEL-Auto | TEL-Manual (same scene names) |
+| Use it when | thisevelife.space is up | thisevelife.space is down, or you want nothing automatic |
+| Overlay pages | thisevelife.space/overlay-metallic/ (server) | ceemaeve.github.io/tel-manual/ (GitHub Pages) |
+| Show title, guest plates, UP NEXT scroll | Discord events through /api/public/feed | manual.json, which the "TEL-Manual feed" run on GitHub refills from the same Discord events every 15 minutes; the editor overrides it |
+| Guest avatars | From the feed | From manual.json, portraits from CCP (a guest without an exact EVE name gets the logo) |
+| Speaking glow | On | Off |
+| Credits names, music, bumper | /overlay/ files on the server | credits-names.txt, credits/music.mp3 and credits/bumper.mp4 in the tel-manual repo |
+| Music player (Now Playing), Countdown, stinger, cameras | Local to the PC | Same |
+| StreamElements alerts and chat timers | StreamElements | Same |
+| OBS scene collection | TELM-Auto | TELM-Manual |
 
-The pages are the same files. `?src=manual` on the URL is the only difference: with it a page reads
-`manual.json` beside itself and skips the VPS; Credits reads its names, music and bumper from beside itself too. Without it the page behaves as before, so TEL-Auto
-is not touched by any of this.
+The pages are the same files. `?src=manual` on the URL makes a page read `manual.json` and the credits files beside
+itself instead of the server. Without it the page behaves as before, so TELM-Auto stays untouched.
 
 ## Switching to Manual on show day
 
-1. Check https://ceemaeve.github.io/tel-manual/manual.json shows today's show. It is refreshed from
-   Discord every 15 minutes by the "TEL-Manual feed" run (Actions tab); if Discord itself is wrong or
-   down, use the editor instead: https://ceemaeve.github.io/tel-manual/, fill in the shows, tick Hold,
-   Build JSON, Copy JSON.
-2. Only with the editor: open https://github.com/ceemaeve/tel-manual/edit/main/manual.json, paste over
-   it, Commit changes. Pages serves the new file within about 5 minutes. Hold keeps the refresh from
-   overwriting it; take Hold off (or paste a JSON without it) to go back to Discord.
+1. Open https://ceemaeve.github.io/tel-manual/manual.json and check it shows today's show. If Discord is wrong or
+   down, use the editor at https://ceemaeve.github.io/tel-manual/: fill in the shows, tick Hold, Build JSON, Copy JSON.
+2. Editor only: open https://github.com/ceemaeve/tel-manual/edit/main/manual.json, paste over it, Commit changes.
+   Pages serves the new file within about 5 minutes. Hold stops the feed from overwriting it; untick Hold (or paste a
+   JSON without it) to hand control back to Discord.
 3. Credits: edit https://github.com/ceemaeve/tel-manual/edit/main/credits-names.txt the same way.
-4. OBS: Scene Collection → TEL-Manual. Same Stream Deck keys; no re-pointing.
-5. Click through PreShow, the camera scene for today's guest count, Break, Credits and Outro.
-   A blank plate or avatar means manual.json has not reached Pages yet: right-click the source → Refresh.
-   Avatars need the exact EVE character name in Guests; otherwise the slot shows the TEL logo.
+4. OBS: Scene Collection, TELM-Manual. The Stream Deck keys stay the same.
+5. Click through PreShow, the camera scene for today's guest count, Break, Credits and Outro. A blank plate or avatar
+   means manual.json has not reached Pages yet: right-click the source, Refresh.
 
-Times in manual.json are UTC (EVE time). The editor converts from Pacific if you choose that.
+manual.json holds times in UTC (EVE time). The editor converts from Pacific if you pick that.
 
 ## Switching back
 
-OBS: Scene Collection → TEL-Auto. Nothing else to undo.
+OBS: Scene Collection, TELM-Auto. You have nothing else to undo.
 
-## First-time setup of the TEL-Manual scene collection
+## Building the TELM-Manual scene collection
 
-1. OBS on TEL-HDT-01: Scene Collection → Export → `TEL-Auto.json`.
-2. PowerShell: `powershell -ExecutionPolicy Bypass -File make-tel-manual.ps1 -Export "<path>\TEL-Auto.json"`
-   (the script is in this repo; download it or run it from a tel-sites checkout at `tel-manual/`).
-   It writes `TELManual.json` beside the export: overlay URLs re-pointed to the Pages site with
-   `?src=manual` (avatar sources included), Election and Month removed, collection renamed TEL-Manual.
-3. OBS: Scene Collection → Import → `TELManual.json`.
-4. Upload the credits song as `credits/music.mp3` and the bumper as `credits/bumper.mp4` to the
-   tel-manual repo (GitHub: Add file → Upload files, into a `credits` folder). The publish script
-   never overwrites them.
-5. Delete `TEL-Auto.json` and `TELManual.json` from Downloads: both hold the StreamElements URL.
+Do this once, and again after any TELM-Auto change you want in the backup.
 
-Redo steps 1 to 3 after any change to TEL-Auto you want in the backup.
+1. OBS on TEL-HDT-01: Scene Collection, Export, `TELM-Auto.json`.
+2. PowerShell (normal, not admin):
+   `powershell -ExecutionPolicy Bypass -File make-telm-manual.ps1 -Export "$HOME\Downloads\TELM-Auto.json"`.
+   The script is in this repo and in tel-sites `tel-metallic/manual/`. It writes `TELM-Manual.json` beside the
+   export: overlay URLs (avatars included) point at the Pages site with `?src=manual`, and the collection takes the
+   name TELM-Manual. It copies everything else as is, the StreamElements alerts and the music player included.
+3. OBS: Scene Collection, Import, `TELM-Manual.json`.
+4. Delete `TELM-Auto.json` and `TELM-Manual.json` from Downloads: both hold the StreamElements URL.
 
-## YouTube thumbnails when the VPS is down
+## When the credits song or bumper changes
 
-The weekend thumbnails are drawn on the VPS every evening. While it is down, the same script runs on GitHub
-instead: in ceemaeve/tel-sites open Actions → "TEL thumbs (VPS-down backup)" → Run workflow (tick "dry run"
-first to see what it would draw). It reads the Discord calendar, draws the next 4 days with the normal template,
-and pushes the PNGs plus their episodes.json entries to main. The run summary lists the title, first line and
-tags to paste into YouTube Studio, where the thumbnail is set by hand until the watcher is back. Never scheduled:
-it is only pressed during an outage, so it never fights the VPS over the same episodes.
+The backup keeps its own copies in ceemaeve/tel-manual, and publish.sh leaves them alone. After you change the song or
+bumper on the server, upload the same file to the repo as `credits/music.mp3` or `credits/bumper.mp4` (GitHub: Add
+file, Upload files, into `credits`). TELM Credits times the scroll to the song, so an old song gives a different
+scroll length. Last synced: 2026-11-16, the 32.5 s Outro song (557,943 bytes, same as the server copy).
 
-## Keeping the pages current
+## YouTube thumbnails when the server is down
 
-The pages live in ceemaeve/tel-sites under `stream/overlay/`. After an overlay change, a TEL Ops
-chat runs `bash tel-manual/publish.sh`, which copies the core pages and this kit into the
-tel-manual repo and pushes. GitHub Pages redeploys on its own. `manual.json`,
-`credits-names.txt` and the `credits/` media in tel-manual are never overwritten by the publish.
+The weekend thumbnails come from the server every evening. While it is down, run the same script on GitHub: in
+ceemaeve/tel-sites open Actions, "TEL thumbs (VPS-down backup)", Run workflow (tick "dry run" first to see what it
+would draw). It reads the Discord calendar, draws the next 4 days with the normal template, and pushes the PNGs and
+their episodes.json entries to main. The run summary lists the title, first line and tags to paste into YouTube Studio,
+where you set the thumbnail by hand until the watcher is back. Press it only during an outage, so it never competes
+with the server over the same episodes.
+
+## For TEL Stream: publishing
+
+`bash tel-metallic/manual/publish.sh [path-to-tel-manual-clone]` from tel-sites copies the metallic pages, the editor,
+this README, the converter, feed.py and the feed workflow into ceemaeve/tel-manual and pushes. It never overwrites
+manual.json, credits-names.txt or credits/ there, and it removes retired pages. Run it after any change to
+stream/overlay-metallic/.
 
 ## What is public
 
-tel-manual is a public repo because GitHub Pages on a private repo needs a paid plan. It holds the
-overlay HTML (already public at thisevelife.space/overlay/), the editor, the sample data and the
-scripts, plus the credits song and bumper you upload. No stream key, no StreamElements URL.
+tel-manual is a public repo because GitHub Pages on a private repo needs a paid plan. It holds the overlay HTML
+(already public at thisevelife.space/overlay-metallic/), the editor, sample data and scripts, plus the credits song and
+bumper. It holds no stream key and no StreamElements URL; the Discord bot token sits in the repo's Actions secrets.

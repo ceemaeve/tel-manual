@@ -3,7 +3,7 @@ name: TEL-Manual feed
 # Fills manual.json from the Discord calendar every 15 minutes, so the TEL-Manual overlays are current without
 # the VPS and without the editor. Runs all the time: it writes only this repo's manual.json and touches nothing
 # on thisevelife.space or in tel-sites, so it never fights the VPS. By hand: Actions -> TEL-Manual feed -> Run.
-# Source: feed.py (published here from tel-sites tel-manual/ by publish.sh; edit it there). A "hold": true in
+# Source: feed.py (published here from tel-sites tel-metallic/manual/ by publish.sh; edit it there). A "hold": true in
 # manual.json (the editor's Hold switch) makes every run leave the file alone until the hold comes off.
 # Secrets: DISCORD_BOT_TOKEN and DISCORD_GUILD_ID (repository secrets; the same read-only bot the VPS uses).
 # GitHub's scheduler can lag a few minutes; the overlays re-read manual.json every 2 minutes anyway.

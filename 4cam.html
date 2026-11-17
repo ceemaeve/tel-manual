@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>This EVE Life · 4 Cam</title>
+<title>TEL-Metallic · 4 Cam</title>
 <meta name="viewport" content="width=1920,height=1080">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800;900&family=Rajdhani:wght@600;700&family=Share+Tech+Mono&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Russo+One&family=Permanent+Marker&family=Orbitron:wght@700;800;900&family=Rajdhani:wght@600;700&family=Share+Tech+Mono&display=swap">
 <style>
   /* OBS Browser Source: 1920 x 1080, transparent background.
      Your looping EVE video sits BELOW this source, your cameras ABOVE it.
@@ -25,9 +25,9 @@
      Episode name bar (top) and up-next ticker (bottom): ?title=Text, ?bar=0, ?speed=55, ?upnext=0, ?ticker=0 (see the block above the closing script tag).
      Add ?guide=1 to show dashed camera outlines and sample plates while lining up (still see-through). */
   :root{
-    --void:#03060e; --edge:#1c2c4d;
-    --blue:#2e8bff; --cyan:#35d6ff; --magenta:#f22dc8; --pink:#ff5cc8;
-    --text-hi:#fff; --text-mid:#c9d6ee; --text-dim:#8b98b8; --text-faint:#7a89ad;
+    --void:#070a1a; --edge:#3b4560;
+    --blue:#2457e0; --cyan:#6fe3ff; --magenta:#c8102e; --pink:#ff7a2e;
+    --text-hi:#fff; --text-mid:#d6deef; --text-dim:#9aa6bf; --text-faint:#8794b0;
     --display:'Orbitron',system-ui,sans-serif;
     --mono:'Share Tech Mono',ui-monospace,monospace;
     --ch:22px; --bw:4px;
@@ -40,7 +40,7 @@
 
   /* brand */
   .brand{position:absolute;top:36px;left:64px;display:flex;align-items:center}
-  .brand-in{display:flex;align-items:center;gap:16px;padding:12px 26px;background:#03060ecc;border:1px solid var(--edge);border-radius:999px}
+  .brand-in{display:flex;align-items:center;gap:16px;padding:12px 26px;background:#070a1acc;border:1px solid var(--edge);border-radius:999px}
   .wordmark{font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:.14em;color:var(--text-hi)}
   .wordmark span{color:var(--pink)}
 
@@ -48,12 +48,12 @@
   .frame{position:absolute;width:628px;height:357px}
   .c1,.c2{top:124px} .c3,.c4{top:597px}
   .c1,.c3{left:308px} .c2,.c4{left:984px}
-  .frame::before{content:"";position:absolute;inset:0;border:1px solid #35d6ff40}
+  .frame::before{content:"";position:absolute;inset:0;border:1px solid #6fe3ff40}
   .frame::after{content:"";position:absolute;inset:0;padding:var(--bw);
     background:conic-gradient(from var(--a),transparent 0deg 250deg,var(--cyan) 300deg,var(--pink) 345deg,transparent 360deg);
     -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
     mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);
-    filter:drop-shadow(0 0 8px #35d6ffaa) drop-shadow(0 0 16px #f22dc866);
+    filter:drop-shadow(0 0 8px #6fe3ffaa) drop-shadow(0 0 16px #c8102e66);
     animation:spin 6s linear infinite}
   .frame.c2::after{animation-delay:-1.5s} .frame.c3::after{animation-delay:-3s} .frame.c4::after{animation-delay:-4.5s}
   @keyframes spin{to{--a:360deg}}
@@ -63,20 +63,20 @@
   .br.bl{bottom:-12px;left:-12px;border-bottom-width:3px;border-left-width:3px}
   .br.brr{bottom:-12px;right:-12px;border-bottom-width:3px;border-right-width:3px}
   .cam-ph{display:none;position:absolute;inset:var(--bw);align-items:center;justify-content:center;
-    font-family:var(--mono);font-size:28px;letter-spacing:.2em;color:#7a89ad;background:transparent;outline:2px dashed #35d6ff66;outline-offset:-14px}
+    font-family:var(--mono);font-size:28px;letter-spacing:.2em;color:#8794b0;background:transparent;outline:2px dashed #6fe3ff66;outline-offset:-14px}
   .guide .cam-ph{display:flex}
 
   /* name plates */
   .plate{position:absolute;width:628px;height:72px;padding:0 32px;
-    background:linear-gradient(180deg,#101a32f2,#060b1af5);border:1px solid var(--edge);
+    background:linear-gradient(180deg,#1b2d74f2,#0a1236f5);border:1px solid var(--edge);
     display:flex;flex-direction:column;justify-content:center;gap:8px}
   .plate.c1,.plate.c2{top:497px} .plate.c3,.plate.c4{top:970px}
   .plate::before{content:"";position:absolute;left:0;top:18px;bottom:18px;width:5px}
-  .plate.c1::before{background:var(--pink);box-shadow:0 0 18px #f22dc8aa}
-  .plate.c2::before,.plate.c3::before,.plate.c4::before{background:var(--cyan);box-shadow:0 0 18px #35d6ffaa}
+  .plate.c1::before{background:var(--pink);box-shadow:0 0 18px #c8102eaa}
+  .plate.c2::before,.plate.c3::before,.plate.c4::before{background:var(--cyan);box-shadow:0 0 18px #6fe3ffaa}
   .name{font-family:var(--display);font-weight:800;font-size:42px;letter-spacing:.04em;color:var(--text-hi);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .title{font-family:var(--mono);font-size:22px;letter-spacing:.16em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .sample{display:none;font-family:var(--display);font-weight:700;font-size:30px;color:var(--text-hi);white-space:nowrap;outline:2px dashed #ff5cc8aa;outline-offset:14px}
+  .sample{display:none;font-family:var(--display);font-weight:700;font-size:30px;color:var(--text-hi);white-space:nowrap;outline:2px dashed #ff7a2eaa;outline-offset:14px}
   .guide .sample{display:block}
   .pl{font-family:'Rajdhani',system-ui,sans-serif;font-weight:700;font-size:38px;color:var(--text-hi);white-space:nowrap;letter-spacing:.02em;max-width:564px;overflow:hidden;text-overflow:ellipsis}
   .pl b{font-family:var(--display);font-weight:800;font-size:.86em;letter-spacing:.04em}
@@ -85,64 +85,187 @@
   .has-auto .sample{display:none!important}
 
   .foot{position:absolute;top:960px;left:0;right:0;display:flex;justify-content:center}
-  .foot-in{display:flex;gap:26px;align-items:center;padding:10px 26px;background:#03060ecc;border:1px solid var(--edge);border-radius:999px;
+  .foot-in{display:flex;gap:26px;align-items:center;padding:10px 26px;background:#070a1acc;border:1px solid var(--edge);border-radius:999px;
     font-family:var(--mono);font-size:26px;letter-spacing:.14em;color:var(--text-dim);text-transform:uppercase}
   .foot i{width:6px;height:6px;background:var(--pink);box-shadow:0 0 8px var(--pink);display:block}
   @media(prefers-reduced-motion:reduce){.frame::after{animation:none}}
 
   /* ---- speaking glow: neon blue tube around the frame and a lit plate ---- */
   .frame .sg{position:absolute;inset:-2px;pointer-events:none;opacity:0;transition:opacity .16s ease-out;
-    border:4px solid #8fd0ff;
-    box-shadow:0 0 6px 1px #3aa0ff,0 0 22px 4px #1a7bff,0 0 56px 10px #0a5cffcc,
-               inset 0 0 6px 1px #3aa0ff,inset 0 0 30px 3px #1a7bffcc,inset 0 0 70px 6px #0a5cff77}
+    border:4px solid #9ae9ff;
+    box-shadow:0 0 6px 1px #6fe3ff,0 0 22px 4px #2457e0,0 0 56px 10px #2457e0cc,
+               inset 0 0 6px 1px #6fe3ff,inset 0 0 30px 3px #2457e0cc,inset 0 0 70px 6px #2457e077}
   .frame.sp .sg{opacity:1;animation:sgp 1.3s ease-in-out infinite}
-  @keyframes sgp{50%{box-shadow:0 0 8px 2px #5ab4ff,0 0 30px 6px #1a7bff,0 0 74px 14px #0a5cffdd,
-               inset 0 0 8px 2px #5ab4ff,inset 0 0 40px 4px #1a7bffdd,inset 0 0 86px 8px #0a5cff88}}
+  @keyframes sgp{50%{box-shadow:0 0 8px 2px #5ab4ff,0 0 30px 6px #2457e0,0 0 74px 14px #2457e0dd,
+               inset 0 0 8px 2px #5ab4ff,inset 0 0 40px 4px #2457e0dd,inset 0 0 86px 8px #2457e088}}
   .plate{transition:border-color .16s,box-shadow .16s}
-  .plate.sp{border-color:#5ab4ff;box-shadow:inset 0 0 34px #1a7bff77}
-  .plate.sp::before{background:#8fd0ff;box-shadow:0 0 6px #8fd0ff,0 0 20px 2px #1a7bff}
+  .plate.sp{border-color:#5ab4ff;box-shadow:inset 0 0 34px #2457e077}
+  .plate.sp::before{background:#9ae9ff;box-shadow:0 0 6px #9ae9ff,0 0 20px 2px #2457e0}
   @media(prefers-reduced-motion:reduce){.frame.sp .sg{animation:none}}
 
   /* ---- episode name bar (top, right of the logo) and up-next ticker (bottom edge) ---- */
   .epbar{position:absolute;top:36px;left:520px;right:64px;height:74px;padding:0 34px 0 38px;display:none;align-items:center;gap:22px;
-    background:linear-gradient(180deg,#101a32f2,#060b1af5);border:1px solid var(--edge)}
+    background:linear-gradient(180deg,#1b2d74f2,#0a1236f5);border:1px solid var(--edge)}
   .epbar.on,.guide .epbar{display:flex}
-  .epbar::before{content:"";position:absolute;left:0;top:18px;bottom:18px;width:5px;background:var(--pink);box-shadow:0 0 18px #f22dc8aa}
+  .epbar::before{content:"";position:absolute;left:0;top:18px;bottom:18px;width:5px;background:var(--pink);box-shadow:0 0 18px #c8102eaa}
   .eplabel{flex:none;font-family:var(--mono);font-size:26px;letter-spacing:.22em;color:var(--pink);text-transform:uppercase;white-space:nowrap}
   .epname{flex:1;min-width:0;font-family:var(--display);font-weight:800;font-size:34px;letter-spacing:.04em;color:var(--text-hi);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-  .ticker{position:absolute;left:0;right:0;top:1042px;height:38px;display:flex;background:#03060eeb;border-top:1px solid var(--edge);overflow:hidden}
+  .ticker{position:absolute;left:0;right:0;top:1042px;height:38px;display:flex;background:#070a1aeb;border-top:1px solid var(--edge);overflow:hidden}
   .tk-label{flex:none;display:flex;align-items:center;padding:0 24px;font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:.24em;color:var(--text-hi);
-    background:#f22dc826;border-right:2px solid var(--pink);box-shadow:6px 0 14px #03060e}
+    background:#c8102e26;border-right:2px solid var(--pink);box-shadow:6px 0 14px #070a1a}
   .tk-win{position:relative;flex:1;min-width:0;overflow:hidden}
   .tk-track{position:absolute;left:0;top:0;height:100%;display:flex;align-items:center;white-space:nowrap;will-change:transform}
   .tk-set{display:flex;align-items:center;flex:none}
-  .tk-item{flex:none;display:flex;align-items:center;gap:12px;padding:0 30px;font-family:var(--mono);font-size:28px;letter-spacing:.06em;color:#c9d6ee}
+  .tk-item{flex:none;display:flex;align-items:center;gap:12px;padding:0 30px;font-family:var(--mono);font-size:28px;letter-spacing:.06em;color:#d6deef}
   .tk-dot{flex:none;width:6px;height:6px;background:var(--pink);box-shadow:0 0 8px var(--pink);display:block}
   .tk-when{font-weight:400;color:var(--cyan);letter-spacing:.08em}
-  .tk-tag{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.16em;padding:0 10px;border:1px solid var(--blue);color:var(--cyan);background:#1470e920}
+  .tk-tag{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.16em;padding:0 10px;border:1px solid var(--blue);color:var(--cyan);background:#2457e020}
   .tk-tag.yt{border-color:#ff3030;color:#ff8080;background:#ff30301c}
   .tk-tag.sp{border-color:#1db954;color:#7be8a0;background:#1db95420}
   .tk-tag.dc{border-color:#5865f2;color:#a9b0ff;background:#5865f21f}
   @keyframes tkscroll{to{transform:translateX(calc(-1 * var(--w)))}}
   @media(prefers-reduced-motion:reduce){.tk-track{animation:none!important}}
 </style>
+<style id="tel-metallic">
+/* TEL-Metallic: the chrome-and-cobalt look laid over the blue TEL pages.
+   make-overlay-metallic.py appends this block after each page's own <style>, so the page keeps its layout,
+   holes, data code and speaking glow, and only the look changes. Edit this file, not stream/overlay-metallic/.
+   Palette (Chris, 2026-11-13): cobalt #2457E0, glow cyan #6FE3FF, chrome #F4F8FF > #9AA6BF > #3B4560,
+   ember #FF7A2E (accent text and bars), crimson #C8102E (decoration only; warning red #FF2D3D stays for warnings).
+   Display face Russo One (one weight: font-synthesis is off so no faux bold), Rajdhani and Share Tech Mono kept. */
+:root{
+  --void:#070a1a; --panel:#0e1a4a; --edge:#3b4560;
+  --blue:#2457e0; --cyan:#6fe3ff; --magenta:#c8102e; --pink:#ff7a2e;
+  --text-hi:#fff; --text-mid:#d6deef; --text-dim:#9aa6bf; --text-faint:#8794b0;
+  --display:'Russo One','Orbitron',system-ui,sans-serif;
+  --glow-pink:0 0 26px #ff7a2e55,0 0 6px #ff7a2ecc;
+  --glow-cyan:0 0 22px #6fe3ff66;
+  --chrome:linear-gradient(180deg,#fff 0%,#e6edff 34%,#9aa6bf 49%,#3b4560 51%,#c9d4ec 64%,#f4f8ff 86%,#9aa6bf 100%);
+  --chrome-edge:linear-gradient(135deg,#f4f8ff 0%,#9aa6bf 28%,#3b4560 50%,#c9d4ec 72%,#6b7894 100%);
+  --brushed:repeating-linear-gradient(90deg,#ffffff07 0 1px,transparent 1px 3px),
+            linear-gradient(180deg,#1b2d74f2 0%,#0e1a4af2 46%,#0a1236f5 100%);
+  --metal-inset:inset 0 1px 0 #f4f8ffb3,inset 0 2px 0 #9aa6bf33,inset 0 -1px 0 #000a,inset 0 0 0 1px #9aa6bf40;
+  --art:none;
+  /* chrome for labels at 26 to 34 px: the dark middle stop raised so the band does not soften small letters */
+  --chrome-label:linear-gradient(180deg,#fff 0%,#e6edff 34%,#aab6cf 49%,#5a6688 51%,#c9d4ec 64%,#f4f8ff 86%,#aab6cf 100%);
+}
+html{font-synthesis:none}
+
+.corner{border-color:#9aa6bf!important;filter:drop-shadow(0 0 6px #6fe3ff66)}
+
+/* chrome lettering */
+h1{background:var(--chrome);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:400;
+  transform:skewX(-10deg);filter:drop-shadow(0 3px 0 #0e1a4a) drop-shadow(0 0 14px #6fe3ff77)}
+.wordmark{font-weight:400;background:linear-gradient(180deg,#fff 0%,#e6edff 55%,#aab6cf 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 8px #6fe3ff55)}
+.wordmark span{background:none;-webkit-text-fill-color:var(--cyan);color:var(--cyan);text-shadow:0 0 12px #6fe3ffaa}
+.name,.epname,.label,.tk-label,.tk-tag,.auto-today,.today .sample,.pl b{font-weight:400}
+
+/* every box in the video-screen frame (Chris, 2026-11-14: "match the frame for all metal boxes"): dark glass, a
+   thin glowing cyan rounded edge, a faint inner line (outline), inner corner brackets (markup from
+   make-overlay-metallic.py, frame_corners) and a faint sheen; no chamfer and no side bars. */
+.slot,.plate,.epbar,.card{clip-path:none!important;border-radius:14px;border:2px solid #6fe3ff!important;
+  background:linear-gradient(116deg,transparent 0 36%,#ffffff0b 36% 50%,transparent 50%),
+    repeating-linear-gradient(0deg,#ffffff05 0 1px,transparent 1px 4px),linear-gradient(180deg,#0c1638e6,#070a1af0)!important;
+  box-shadow:0 0 0 1px #6fe3ff40,0 0 16px #6fe3ffaa,0 0 46px #2457e066,inset 0 0 18px #6fe3ff33!important;
+  outline:1px solid #6fe3ff38;outline-offset:-9px}
+.slot::after,.plate::before,.epbar::before,.card::after,.slot-edge{display:none!important}
+.vs-c{position:absolute;width:22px;height:22px;border:0 solid #9ae9ffcc;filter:drop-shadow(0 0 4px #6fe3ff);pointer-events:none}
+.vs-c.tl{top:15px;left:15px;border-top-width:2px;border-left-width:2px}
+.vs-c.tr{top:15px;right:15px;border-top-width:2px;border-right-width:2px}
+.vs-c.bl{bottom:15px;left:15px;border-bottom-width:2px;border-left-width:2px}
+.vs-c.br{bottom:15px;right:15px;border-bottom-width:2px;border-right-width:2px}
+.plate .vs-c,.epbar .vs-c{width:14px;height:14px}
+.plate .vs-c.tl,.plate .vs-c.tr,.epbar .vs-c.tl,.epbar .vs-c.tr{top:12px}
+.plate .vs-c.bl,.plate .vs-c.br,.epbar .vs-c.bl,.epbar .vs-c.br{bottom:12px}
+.plate .vs-c.tl,.plate .vs-c.bl,.epbar .vs-c.tl,.epbar .vs-c.bl{left:12px}
+.plate .vs-c.tr,.plate .vs-c.br,.epbar .vs-c.tr,.epbar .vs-c.br{right:12px}
+.brand-in,.foot-in{background:#070a1ae6;border:2px solid #6fe3ff;box-shadow:0 0 0 1px #6fe3ff40,0 0 14px #6fe3ff88,inset 0 0 12px #6fe3ff26}
+.rule{background:linear-gradient(90deg,transparent,var(--magenta),var(--pink),var(--cyan),transparent);box-shadow:var(--glow-pink)}
+
+/* camera frames: a chrome bezel with a slow sheen sweeping round it */
+.frame::before{border-color:#9aa6bf55}
+.frame::after{background:conic-gradient(from var(--a),#3b4560 0deg,#f4f8ff 40deg,#9aa6bf 95deg,#3b4560 170deg,#6fe3ff 245deg,#f4f8ff 290deg,#3b4560 360deg);
+  filter:drop-shadow(0 0 6px #6fe3ff88) drop-shadow(0 0 14px #2457e066);animation-duration:9s}
+.br{border-color:#c9d4ec;filter:drop-shadow(0 0 5px #6fe3ff88)}
+
+/* up-next ticker */
+.ticker{background:#070a1aeb;border-top:1px solid #9aa6bf66;box-shadow:inset 0 1px 0 #f4f8ff55}
+.tk-label{background:linear-gradient(180deg,#c8102e40,#c8102e1f);border-right-color:var(--pink);box-shadow:6px 0 14px #070a1a}
+.tk-item{color:var(--text-mid)}
+
+/* review 2026-11-13 (apple-design pass) */
+/* ember means "on now" only: role lines on the name plates go chrome grey (5.1:1 on the plates) */
+.pl .sub,.plate .title{color:var(--text-dim)!important}
+/* Up Next ticker (C6): platform names in chrome lettering like the footers, no coloured boxes */
+.ticker .tk-tag{border:0!important;padding:0 4px!important;background:var(--chrome-label)!important;-webkit-background-clip:text!important;background-clip:text!important;
+  color:transparent!important;font-weight:400;letter-spacing:.08em;font-style:normal;display:inline-block;transform:skewX(-10deg)}
+/* TEL-Metallic camera scenes (2Cam, 3Cam, 4Cam): space-age video screens instead of metal shells.
+   Chris, 2026-11-14, from Higgsfield mock-up A (signal bars top right only). The camera sits UNDER this page in
+   OBS, so everything here (edge, ticks, REC, signal) is always drawn over the camera or the guest avatar.
+   Markup from make-overlay-metallic.py (CAM_HUD). */
+.frame::before{border:2px solid #6fe3ff;border-radius:14px;
+  box-shadow:0 0 0 1px #6fe3ff40,0 0 16px #6fe3ffaa,0 0 46px #2457e066,inset 0 0 18px #6fe3ff33}
+.frame::after{animation:none!important;background:none!important;filter:none!important;-webkit-mask:none!important;mask:none!important;
+  padding:0!important;inset:9px!important;border:1px solid #6fe3ff38;border-radius:9px}
+/* thin inner corner brackets in place of the heavy outer ones */
+.frame .br{width:26px;height:26px;border-color:#9ae9ffcc!important;filter:drop-shadow(0 0 4px #6fe3ff)!important}
+.frame .br.tl{top:16px;left:16px;border-top-width:2px;border-left-width:2px}
+.frame .br.tr{top:16px;right:16px;border-top-width:2px;border-right-width:2px}
+.frame .br.bl{bottom:16px;left:16px;border-bottom-width:2px;border-left-width:2px}
+.frame .br.brr{bottom:16px;right:16px;border-bottom-width:2px;border-right-width:2px}
+/* HUD tick rulers along the edges */
+.vs-tick{position:absolute;pointer-events:none;opacity:.75}
+.vs-tick.t,.vs-tick.b{left:32%;right:32%;height:10px;
+  background:repeating-linear-gradient(90deg,#6fe3ffcc 0 2px,transparent 2px 60px) 0 0/100% 10px no-repeat,
+             repeating-linear-gradient(90deg,#6fe3ff88 0 1px,transparent 1px 12px) 0 4px/100% 6px no-repeat}
+.vs-tick.t{top:13px} .vs-tick.b{bottom:13px;transform:scaleY(-1)}
+.vs-tick.l,.vs-tick.r{top:30%;bottom:30%;width:10px;
+  background:repeating-linear-gradient(180deg,#6fe3ffcc 0 2px,transparent 2px 60px) 0 0/10px 100% no-repeat,
+             repeating-linear-gradient(180deg,#6fe3ff88 0 1px,transparent 1px 12px) 4px 0/6px 100% no-repeat}
+.vs-tick.l{left:13px} .vs-tick.r{right:13px;transform:scaleX(-1)}
+/* a very faint glass sheen and scanlines over the picture */
+.vs-glass{position:absolute;inset:4px;border-radius:12px;pointer-events:none;
+  background:linear-gradient(116deg,transparent 0 36%,#ffffff0b 36% 50%,transparent 50%),
+             repeating-linear-gradient(0deg,#ffffff05 0 1px,transparent 1px 4px)}
+/* REC, top left: a slow-blinking red dot */
+.vs-rec{position:absolute;top:22px;left:48px;display:flex;align-items:center;gap:9px;font:400 26px/1 'Share Tech Mono',monospace;
+  letter-spacing:.12em;color:#ffd6da;text-shadow:0 0 8px #000,0 0 3px #000}
+.vs-rec::before{content:"";width:13px;height:13px;border-radius:50%;background:#ff4d5e;box-shadow:0 0 10px #ff4d5e;animation:vs-rec 2s steps(1) infinite}
+@keyframes vs-rec{50%{opacity:.15}}
+/* signal bars, top right: dim at rest, light and pulse while that person speaks (.sp from the speaking bot) */
+.vs-sig{position:absolute;top:20px;right:48px;display:flex;align-items:flex-end;gap:4px;height:24px}
+.vs-sig s{display:block;width:5px;background:#6fe3ff;opacity:.45;box-shadow:0 0 6px #6fe3ff88}
+.vs-sig s:nth-child(1){height:7px}.vs-sig s:nth-child(2){height:12px}.vs-sig s:nth-child(3){height:18px}.vs-sig s:nth-child(4){height:24px}
+.frame.sp .vs-sig s{opacity:1;animation:vs-sig .6s ease-in-out infinite alternate}
+.frame.sp .vs-sig s:nth-child(2){animation-delay:.1s}.frame.sp .vs-sig s:nth-child(3){animation-delay:.2s}.frame.sp .vs-sig s:nth-child(4){animation-delay:.3s}
+@keyframes vs-sig{from{opacity:.35}to{opacity:1}}
+/* speaking glow follows the rounded screen edge */
+.frame .sg{border-radius:16px!important}
+/* 3Cam and 4Cam screens are smaller: tighter HUD */
+.c1 .vs-rec,.c2 .vs-rec,.c3 .vs-rec,.c4 .vs-rec{top:20px;left:44px}
+@media(prefers-reduced-motion:reduce){.vs-rec::before,.frame.sp .vs-sig s{animation:none!important}}
+
+/* name plates use the shared frame in metallic.css; they light with the screen above when that person speaks */
+.plate.sp{border-color:#bff4ff!important;box-shadow:0 0 0 1px #9ae9ff,0 0 20px #6fe3ffdd,0 0 54px #2457e0aa,inset 0 0 26px #6fe3ff55!important}
+</style>
 </head>
 <body>
 <div class="stage" id="stage">
   <div class="brand"><div class="brand-in"><div class="wordmark">THIS <span>EVE</span> LIFE</div></div></div>
 
-  <div class="frame c1"><div class="cam-ph">CAMERA 1</div><i class="br tl"></i><i class="br tr"></i><i class="br bl"></i><i class="br brr"></i></div>
-  <div class="frame c2"><div class="cam-ph">CAMERA 2</div><i class="br tl"></i><i class="br tr"></i><i class="br bl"></i><i class="br brr"></i></div>
-  <div class="frame c3"><div class="cam-ph">CAMERA 3</div><i class="br tl"></i><i class="br tr"></i><i class="br bl"></i><i class="br brr"></i></div>
-  <div class="frame c4"><div class="cam-ph">CAMERA 4</div><i class="br tl"></i><i class="br tr"></i><i class="br bl"></i><i class="br brr"></i></div>
+  <div class="frame c1"><div class="cam-ph">CAMERA 1</div><i class="vs-glass"></i><i class="vs-tick t"></i><i class="vs-tick b"></i><i class="vs-tick l"></i><i class="vs-tick r"></i><i class="vs-rec">REC</i><i class="vs-sig"><s></s><s></s><s></s><s></s></i><i class="br tl"></i><i class="br tr"></i><i class="br bl"></i><i class="br brr"></i></div>
+  <div class="frame c2"><div class="cam-ph">CAMERA 2</div><i class="vs-glass"></i><i class="vs-tick t"></i><i class="vs-tick b"></i><i class="vs-tick l"></i><i class="vs-tick r"></i><i class="vs-rec">REC</i><i class="vs-sig"><s></s><s></s><s></s><s></s></i><i class="br tl"></i><i class="br tr"></i><i class="br bl"></i><i class="br brr"></i></div>
+  <div class="frame c3"><div class="cam-ph">CAMERA 3</div><i class="vs-glass"></i><i class="vs-tick t"></i><i class="vs-tick b"></i><i class="vs-tick l"></i><i class="vs-tick r"></i><i class="vs-rec">REC</i><i class="vs-sig"><s></s><s></s><s></s><s></s></i><i class="br tl"></i><i class="br tr"></i><i class="br bl"></i><i class="br brr"></i></div>
+  <div class="frame c4"><div class="cam-ph">CAMERA 4</div><i class="vs-glass"></i><i class="vs-tick t"></i><i class="vs-tick b"></i><i class="vs-tick l"></i><i class="vs-tick r"></i><i class="vs-rec">REC</i><i class="vs-sig"><s></s><s></s><s></s><s></s></i><i class="br tl"></i><i class="br tr"></i><i class="br bl"></i><i class="br brr"></i></div>
 
-  <div class="plate c1 chamfer"><div class="pl" id="p1"></div><div class="sample">Ceema<br><small style="font-size:20px;color:#ff5cc8">SPACE JOURNALIST</small></div></div>
-  <div class="plate c2 chamfer"><div class="pl" id="p2"></div><div class="sample">Debes Sparre</div></div>
-  <div class="plate c3 chamfer"><div class="pl" id="p3"></div><div class="sample">YoungPuke2</div></div>
-  <div class="plate c4 chamfer"><div class="pl" id="p4"></div><div class="sample">Third Guest</div></div>
+  <div class="plate c1 chamfer"><i class="vs-c tl"></i><i class="vs-c tr"></i><i class="vs-c bl"></i><i class="vs-c br"></i><div class="pl" id="p1"></div><div class="sample">Ceema<br><small style="font-size:20px;color:#ff7a2e">SPACE JOURNALIST</small></div></div>
+  <div class="plate c2 chamfer"><i class="vs-c tl"></i><i class="vs-c tr"></i><i class="vs-c bl"></i><i class="vs-c br"></i><div class="pl" id="p2"></div><div class="sample">Debes Sparre</div></div>
+  <div class="plate c3 chamfer"><i class="vs-c tl"></i><i class="vs-c tr"></i><i class="vs-c bl"></i><i class="vs-c br"></i><div class="pl" id="p3"></div><div class="sample">YoungPuke2</div></div>
+  <div class="plate c4 chamfer"><i class="vs-c tl"></i><i class="vs-c tr"></i><i class="vs-c bl"></i><i class="vs-c br"></i><div class="pl" id="p4"></div><div class="sample">Third Guest</div></div>
 
-  <div class="epbar chamfer" id="epbar"><span class="eplabel" id="eplabel">Live Now</span><div class="epname" id="epname"></div></div>
+  <div class="epbar chamfer" id="epbar"><i class="vs-c tl"></i><i class="vs-c tr"></i><i class="vs-c bl"></i><i class="vs-c br"></i><span class="eplabel" id="eplabel">Live Now</span><div class="epname" id="epname"></div></div>
   <div class="ticker" id="ticker"><div class="tk-label" id="tkLabel">UP NEXT</div><div class="tk-win" id="tkWin"><div class="tk-track" id="tkTrack"></div></div></div>
 </div>
 <script>

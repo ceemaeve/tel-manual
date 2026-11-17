@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>This EVE Life · Guest avatar</title>
+<title>TEL-Metallic · Guest avatar</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
   /* OBS Browser Source, one per guest slot, placed UNDER the scene overlay (a guest with a camera covers it).
@@ -19,7 +19,7 @@
                             come from CCP, so no VPS is needed); without it the page behaves exactly as before
      ?now=2026-10-10T20:30Z test clock (same as the camera pages)
      ?debug                 prints what it is doing in the corner (turn off for stream) */
-  :root{ --void:#03060e; --blue:#2e8bff; --cyan:#35d6ff; --edge:#1c2c4d; }
+  :root{ --void:#070a1a; --blue:#2457e0; --cyan:#6fe3ff; --edge:#3b4560; }
   *{box-sizing:border-box}
   html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent}
   #stage{position:absolute;left:0;top:0;transform-origin:0 0;overflow:hidden;background:transparent;opacity:0;transition:opacity .45s ease}
@@ -32,8 +32,91 @@
   .logo{position:absolute;left:50%;top:50%;width:min(52%,82%);transform:translate(-50%,-50%);display:none}
   #stage.fallback .fg{display:none}
   #stage.fallback .logo{display:block;filter:drop-shadow(0 0 14px rgba(46,139,255,.6))}
-  #stage.fallback .bg{background-image:none;background:radial-gradient(circle at 50% 40%,#0e1f45,#03060e 75%);filter:none}
+  #stage.fallback .bg{background-image:none;background:radial-gradient(circle at 50% 40%,#0e1f45,#070a1a 75%);filter:none}
   #dbg{position:fixed;left:4px;bottom:4px;font:12px/1.3 Consolas,monospace;color:#9fe;background:rgba(0,0,0,.7);padding:3px 6px;display:none;z-index:9;max-width:96%}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Russo+One&family=Permanent+Marker&display=swap">
+<style id="tel-metallic">
+/* TEL-Metallic: the chrome-and-cobalt look laid over the blue TEL pages.
+   make-overlay-metallic.py appends this block after each page's own <style>, so the page keeps its layout,
+   holes, data code and speaking glow, and only the look changes. Edit this file, not stream/overlay-metallic/.
+   Palette (Chris, 2026-11-13): cobalt #2457E0, glow cyan #6FE3FF, chrome #F4F8FF > #9AA6BF > #3B4560,
+   ember #FF7A2E (accent text and bars), crimson #C8102E (decoration only; warning red #FF2D3D stays for warnings).
+   Display face Russo One (one weight: font-synthesis is off so no faux bold), Rajdhani and Share Tech Mono kept. */
+:root{
+  --void:#070a1a; --panel:#0e1a4a; --edge:#3b4560;
+  --blue:#2457e0; --cyan:#6fe3ff; --magenta:#c8102e; --pink:#ff7a2e;
+  --text-hi:#fff; --text-mid:#d6deef; --text-dim:#9aa6bf; --text-faint:#8794b0;
+  --display:'Russo One','Orbitron',system-ui,sans-serif;
+  --glow-pink:0 0 26px #ff7a2e55,0 0 6px #ff7a2ecc;
+  --glow-cyan:0 0 22px #6fe3ff66;
+  --chrome:linear-gradient(180deg,#fff 0%,#e6edff 34%,#9aa6bf 49%,#3b4560 51%,#c9d4ec 64%,#f4f8ff 86%,#9aa6bf 100%);
+  --chrome-edge:linear-gradient(135deg,#f4f8ff 0%,#9aa6bf 28%,#3b4560 50%,#c9d4ec 72%,#6b7894 100%);
+  --brushed:repeating-linear-gradient(90deg,#ffffff07 0 1px,transparent 1px 3px),
+            linear-gradient(180deg,#1b2d74f2 0%,#0e1a4af2 46%,#0a1236f5 100%);
+  --metal-inset:inset 0 1px 0 #f4f8ffb3,inset 0 2px 0 #9aa6bf33,inset 0 -1px 0 #000a,inset 0 0 0 1px #9aa6bf40;
+  --art:none;
+  /* chrome for labels at 26 to 34 px: the dark middle stop raised so the band does not soften small letters */
+  --chrome-label:linear-gradient(180deg,#fff 0%,#e6edff 34%,#aab6cf 49%,#5a6688 51%,#c9d4ec 64%,#f4f8ff 86%,#aab6cf 100%);
+}
+html{font-synthesis:none}
+
+.corner{border-color:#9aa6bf!important;filter:drop-shadow(0 0 6px #6fe3ff66)}
+
+/* chrome lettering */
+h1{background:var(--chrome);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:400;
+  transform:skewX(-10deg);filter:drop-shadow(0 3px 0 #0e1a4a) drop-shadow(0 0 14px #6fe3ff77)}
+.wordmark{font-weight:400;background:linear-gradient(180deg,#fff 0%,#e6edff 55%,#aab6cf 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 8px #6fe3ff55)}
+.wordmark span{background:none;-webkit-text-fill-color:var(--cyan);color:var(--cyan);text-shadow:0 0 12px #6fe3ffaa}
+.name,.epname,.label,.tk-label,.tk-tag,.auto-today,.today .sample,.pl b{font-weight:400}
+
+/* every box in the video-screen frame (Chris, 2026-11-14: "match the frame for all metal boxes"): dark glass, a
+   thin glowing cyan rounded edge, a faint inner line (outline), inner corner brackets (markup from
+   make-overlay-metallic.py, frame_corners) and a faint sheen; no chamfer and no side bars. */
+.slot,.plate,.epbar,.card{clip-path:none!important;border-radius:14px;border:2px solid #6fe3ff!important;
+  background:linear-gradient(116deg,transparent 0 36%,#ffffff0b 36% 50%,transparent 50%),
+    repeating-linear-gradient(0deg,#ffffff05 0 1px,transparent 1px 4px),linear-gradient(180deg,#0c1638e6,#070a1af0)!important;
+  box-shadow:0 0 0 1px #6fe3ff40,0 0 16px #6fe3ffaa,0 0 46px #2457e066,inset 0 0 18px #6fe3ff33!important;
+  outline:1px solid #6fe3ff38;outline-offset:-9px}
+.slot::after,.plate::before,.epbar::before,.card::after,.slot-edge{display:none!important}
+.vs-c{position:absolute;width:22px;height:22px;border:0 solid #9ae9ffcc;filter:drop-shadow(0 0 4px #6fe3ff);pointer-events:none}
+.vs-c.tl{top:15px;left:15px;border-top-width:2px;border-left-width:2px}
+.vs-c.tr{top:15px;right:15px;border-top-width:2px;border-right-width:2px}
+.vs-c.bl{bottom:15px;left:15px;border-bottom-width:2px;border-left-width:2px}
+.vs-c.br{bottom:15px;right:15px;border-bottom-width:2px;border-right-width:2px}
+.plate .vs-c,.epbar .vs-c{width:14px;height:14px}
+.plate .vs-c.tl,.plate .vs-c.tr,.epbar .vs-c.tl,.epbar .vs-c.tr{top:12px}
+.plate .vs-c.bl,.plate .vs-c.br,.epbar .vs-c.bl,.epbar .vs-c.br{bottom:12px}
+.plate .vs-c.tl,.plate .vs-c.bl,.epbar .vs-c.tl,.epbar .vs-c.bl{left:12px}
+.plate .vs-c.tr,.plate .vs-c.br,.epbar .vs-c.tr,.epbar .vs-c.br{right:12px}
+.brand-in,.foot-in{background:#070a1ae6;border:2px solid #6fe3ff;box-shadow:0 0 0 1px #6fe3ff40,0 0 14px #6fe3ff88,inset 0 0 12px #6fe3ff26}
+.rule{background:linear-gradient(90deg,transparent,var(--magenta),var(--pink),var(--cyan),transparent);box-shadow:var(--glow-pink)}
+
+/* camera frames: a chrome bezel with a slow sheen sweeping round it */
+.frame::before{border-color:#9aa6bf55}
+.frame::after{background:conic-gradient(from var(--a),#3b4560 0deg,#f4f8ff 40deg,#9aa6bf 95deg,#3b4560 170deg,#6fe3ff 245deg,#f4f8ff 290deg,#3b4560 360deg);
+  filter:drop-shadow(0 0 6px #6fe3ff88) drop-shadow(0 0 14px #2457e066);animation-duration:9s}
+.br{border-color:#c9d4ec;filter:drop-shadow(0 0 5px #6fe3ff88)}
+
+/* up-next ticker */
+.ticker{background:#070a1aeb;border-top:1px solid #9aa6bf66;box-shadow:inset 0 1px 0 #f4f8ff55}
+.tk-label{background:linear-gradient(180deg,#c8102e40,#c8102e1f);border-right-color:var(--pink);box-shadow:6px 0 14px #070a1a}
+.tk-item{color:var(--text-mid)}
+
+/* review 2026-11-13 (apple-design pass) */
+/* ember means "on now" only: role lines on the name plates go chrome grey (5.1:1 on the plates) */
+.pl .sub,.plate .title{color:var(--text-dim)!important}
+/* Up Next ticker (C6): platform names in chrome lettering like the footers, no coloured boxes */
+.ticker .tk-tag{border:0!important;padding:0 4px!important;background:var(--chrome-label)!important;-webkit-background-clip:text!important;background-clip:text!important;
+  color:transparent!important;font-weight:400;letter-spacing:.08em;font-style:normal;display:inline-block;transform:skewX(-10deg)}
+/* TEL-Metallic guest avatar (Chris, 2026-11-14): the portrait no longer fills the whole camera window. It sits
+   smaller in the middle of a dark screen, so the video-screen edge, ticks, REC and signal bars on the scene
+   overlay (drawn above this source) stay clear and readable. */
+.bg{filter:blur(34px) brightness(.28) saturate(1.1)!important}
+.tint{background:radial-gradient(ellipse at 50% 45%,rgba(36,87,224,.30),rgba(7,10,26,.85) 70%)!important}
+.fg{top:16%!important;height:68%!important;border-radius:12px;
+  box-shadow:0 0 0 2px rgba(111,227,255,.55),0 0 22px rgba(111,227,255,.45),0 0 60px rgba(36,87,224,.45)!important}
 </style>
 </head>
 <body>

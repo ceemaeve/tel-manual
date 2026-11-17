@@ -4,25 +4,25 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
-<title>TEL-Manual Editor</title>
+<title>TELM-Manual Editor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Russo+One&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap">
 <style>
-  /* Same tokens as thisevelife.space and the overlays (Overlay Kit › Match the website). */
-  :root{color-scheme:dark;--void:#03060e;--panel:#09142c;--panel2:#0e1830;--edge:#1c2c4d;--blue:#2e8bff;--cyan:#35d6ff;--pink:#ff5cc8;
-    --hi:#fff;--mid:#c9d6ee;--dim:#8b98b8;--ok:#5ee38a;--warn:#ffb648;
-    --display:'Orbitron',system-ui,sans-serif;--body:'Rajdhani','Segoe UI',system-ui,sans-serif;--mono:'Share Tech Mono',ui-monospace,Consolas,monospace}
+  /* TEL-Metallic tokens (chrome and cobalt, crimson for decoration, red only for warnings), as in tel-metallic/metallic.css. */
+  :root{color-scheme:dark;--void:#070a1a;--panel:#0e1a4a;--panel2:#16245c;--edge:#3b4560;--blue:#2457e0;--cyan:#6fe3ff;--pink:#c8102e;
+    --hi:#fff;--mid:#d6deef;--dim:#9aa6bf;--ok:#5ee38a;--warn:#ff2d3d;
+    --display:'Russo One',system-ui,sans-serif;--body:'Rajdhani','Segoe UI',system-ui,sans-serif;--mono:'Share Tech Mono',ui-monospace,Consolas,monospace}
   *{box-sizing:border-box}
   html,body{margin:0;background:var(--void)}
   body{color:var(--mid);font:500 18px/1.5 var(--body);padding:24px 16px 64px;
-    background-image:linear-gradient(#2e8bff0c 1px,transparent 1px),linear-gradient(90deg,#2e8bff0c 1px,transparent 1px);background-size:44px 44px}
+    background-image:linear-gradient(#6fe3ff0a 1px,transparent 1px),linear-gradient(90deg,#6fe3ff0a 1px,transparent 1px);background-size:44px 44px}
   .wrap{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
-  h1{font:800 clamp(22px,4vw,30px)/1.2 var(--display);color:var(--hi);margin:0;letter-spacing:.03em} h1 span{color:var(--pink)}
-  h2{font:700 15px/1 var(--display);color:var(--cyan);letter-spacing:.12em;text-transform:uppercase;margin:0 0 14px;display:flex;align-items:center;gap:10px}
+  h1{font:400 clamp(22px,4vw,30px)/1.2 var(--display);color:var(--hi);margin:0;letter-spacing:.03em} h1 span{color:var(--pink)}
+  h2{font:400 15px/1 var(--display);color:var(--cyan);letter-spacing:.12em;text-transform:uppercase;margin:0 0 14px;display:flex;align-items:center;gap:10px}
   h2::before{content:"";width:8px;height:8px;background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
   p{margin:0;max-width:68ch} .note{color:var(--dim);font-size:16px}
-  a{color:var(--cyan)} a:hover{color:var(--pink)}
+  a{color:var(--cyan)} a:hover{color:var(--hi)}
   .panel{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--edge);padding:18px 20px}
   label{display:flex;flex-direction:column;gap:6px;font-weight:600;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
   input,textarea,select{font:600 18px var(--body);color:var(--hi);background:var(--void);border:1px solid var(--edge);padding:10px 12px;min-height:44px;width:100%}
@@ -36,8 +36,8 @@
   .show:first-of-type{border-top:0;padding-top:0;margin-top:0}
   .actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
   button{font:700 15px var(--body);letter-spacing:.08em;text-transform:uppercase;cursor:pointer;min-height:44px;padding:0 16px;
-    background:#1470e929;border:1px solid var(--blue);color:#e3f0ff}
-  button.primary{background:var(--blue);color:#03060e;border-color:var(--blue)} button:hover{filter:brightness(1.15)}
+    background:#2457e033;border:1px solid var(--blue);color:#e3f0ff}
+  button.primary{background:var(--blue);color:#fff;border-color:var(--blue)} button:hover{filter:brightness(1.15)}
   button.quiet{background:transparent;border-color:var(--edge);color:var(--mid)}
   pre{margin:0;white-space:pre-wrap;word-break:break-all;background:var(--void);border:1px solid var(--edge);padding:12px 14px;font:400 14px/1.5 var(--mono);color:var(--hi);max-height:320px;overflow:auto}
   #status{font-family:var(--mono);font-size:15px;color:var(--dim);min-height:1.5em} #status.ok{color:var(--ok)} #status.warn{color:var(--warn)}
@@ -48,8 +48,8 @@
 <body>
 <div class="wrap">
   <header class="stack">
-    <h1>THIS <span>EVE</span> LIFE · TEL-Manual Editor</h1>
-    <p class="note"><kbd>manual.json</kbd> is filled from the Discord calendar every 15 minutes by the <a href="https://github.com/ceemaeve/tel-manual/actions/workflows/feed.yml" target="_blank" rel="noopener">TEL-Manual feed</a> run, so this editor is only for when you want to write the list yourself. Nothing here touches the VPS or the automatic set. Fill in the shows, press <b>Build JSON</b>, copy it, and paste it over <kbd>manual.json</kbd> on GitHub. The overlays pick it up within about 5 minutes (GitHub Pages cache); right-click → Refresh in OBS to hurry it.</p>
+    <h1>THIS <span>EVE</span> LIFE · TELM-Manual Editor</h1>
+    <p class="note"><kbd>manual.json</kbd> is filled from the Discord calendar every 15 minutes by the <a href="https://github.com/ceemaeve/tel-manual/actions/workflows/feed.yml" target="_blank" rel="noopener">TELM-Manual feed</a> run, so this editor is only for when you want to write the list yourself. Nothing here touches the VPS or the automatic set. Fill in the shows, press <b>Build JSON</b>, copy it, and paste it over <kbd>manual.json</kbd> on GitHub. The overlays pick it up within about 5 minutes (GitHub Pages cache); right-click → Refresh in OBS to hurry it.</p>
   </header>
 
   <section class="panel">
@@ -88,7 +88,7 @@
     <ol>
       <li>Open <kbd>manual.json</kbd> with the link above (sign in to GitHub).</li>
       <li>Select everything in the editor, paste the JSON, press <b>Commit changes</b>.</li>
-      <li>In OBS, switch to the <b>TEL-Manual</b> scene collection. Refresh a Browser Source if a plate is still blank after 5 minutes.</li>
+      <li>In OBS, switch to the <b>TELM-Manual</b> scene collection. Refresh a Browser Source if a plate is still blank after 5 minutes.</li>
     </ol>
   </section>
 </div>

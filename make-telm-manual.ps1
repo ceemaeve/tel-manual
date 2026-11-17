@@ -1,21 +1,22 @@
 <#
 .SYNOPSIS
-  Builds the TEL-Manual OBS scene collection from an export of TEL-Auto.
+  Builds the TELM-Manual OBS scene collection (the server-free backup of TELM-Auto) from a TELM-Auto export.
 
 .DESCRIPTION
-  Reads TEL-Auto.json (OBS: Scene Collection > Export), writes TELManual.json next to it, and
-  leaves the export untouched. In the copy:
-    - every Browser Source URL under thisevelife.space/overlay/ points at the TEL-Manual site
+  Reads TELM-Auto.json (OBS: Scene Collection > Export), writes TELM-Manual.json next to it, and
+  leaves the export untouched (an export already called TELM-Manual.json gives TELM-Manual.rebuilt.json). In the copy:
+    - every Browser Source URL under thisevelife.space/overlay-metallic/ (or /overlay/) points at the TELM-Manual site
       (https://ceemaeve.github.io/tel-manual/) with ?src=manual added; this includes the guest
       avatar sources (avatar.html), which then read guests from manual.json and portraits from CCP
     - the Election and Month scenes are removed (not part of the backup)
-    - the collection is renamed TEL-Manual
-  Everything else (cameras, Countdown, Now Playing, alerts, audio, scene names) is copied as is.
+    - the collection is renamed TELM-Manual
+  Everything else (cameras, Countdown, the Now Playing music player, StreamElements alerts, stinger, audio, scene names,
+  Stream Deck keys) is copied as is.
   Run it by hand on the stream PC; it is not a scheduled task.
 
 .EXAMPLE
-  powershell -ExecutionPolicy Bypass -File make-tel-manual.ps1 -Export "$HOME\Downloads\TEL-Auto.json"
-  Then OBS: Scene Collection > Import > TELManual.json
+  powershell -ExecutionPolicy Bypass -File make-telm-manual.ps1 -Export "$HOME\Downloads\TELM-Auto.json"
+  Then OBS: Scene Collection > Import > TELM-Manual.json
 #>
 param(
   [Parameter(Mandatory = $true)][string]$Export,
@@ -25,13 +26,18 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 if (-not (Test-Path -LiteralPath $Export)) { throw "Export not found: $Export" }
-if (-not $Out) { $Out = Join-Path (Split-Path -Parent (Resolve-Path $Export)) 'TELManual.json' }
+if (-not $Out) {
+  $dir = Split-Path -Parent (Resolve-Path $Export)
+  $Out = Join-Path $dir 'TELM-Manual.json'
+  if ((Resolve-Path $Export).Path -ieq $Out) { $Out = Join-Path $dir 'TELM-Manual.rebuilt.json' }
+}
+if ((Test-Path -LiteralPath $Out) -and (Resolve-Path $Out).Path -ieq (Resolve-Path $Export).Path) { throw "-Out is the export itself: $Out" }
 
 $json = Get-Content -LiteralPath $Export -Raw -Encoding UTF8
 $doc = $json | ConvertFrom-Json
 
 # 1. Rewrite overlay URLs (avatar.html included) and find the Month source.
-$rx = [regex]'^(?:https?://)?(?:www\.)?thisevelife\.space/overlay/([A-Za-z0-9_-]+\.html)(?:\?(.*))?$'
+$rx = [regex]'^(?:https?://)?(?:www\.)?thisevelife\.space/overlay(?:-metallic)?/([A-Za-z0-9_-]+\.html)(?:\?(.*))?$'
 $dropSources = New-Object System.Collections.Generic.List[string]
 $rewritten = 0
 foreach ($s in $doc.sources) {
@@ -60,10 +66,10 @@ if ($doc.current_scene -and ($DropScenes -contains $doc.current_scene)) { $doc.c
 if ($doc.current_program_scene -and ($DropScenes -contains $doc.current_program_scene)) { $doc.current_program_scene = 'PreShow' }
 
 # 3. Rename and write.
-$doc.name = 'TEL-Manual'
+$doc.name = 'TELM-Manual'
 $doc | ConvertTo-Json -Depth 64 | Set-Content -LiteralPath $Out -Encoding UTF8
 
 Write-Host "Wrote $Out"
 Write-Host "  overlay URLs re-pointed: $rewritten"
 Write-Host "  sources removed: $($dropSources -join ', ')"
-Write-Host "Next: OBS > Scene Collection > Import > TELManual.json"
+Write-Host "Next: OBS > Scene Collection > Import > $(Split-Path -Leaf $Out)"
