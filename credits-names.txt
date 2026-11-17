@@ -1,8 +1,31 @@
-// TEL-Manual credits list. Same format as the live one on the VPS:
-// "# Heading" starts a group, one name per line, "Name | Role" adds a role line.
-// The "# Guests" group fills itself from manual.json; names typed here are a backup.
-# Host
-Ceema | Space Journalist
+// Credits list. Edit this file; the page does not need to change.
+// "# Heading" starts a group, one name per line, blank lines are ignored.
+// "Name | Role" puts the role in small type under the name.
+// The "Guests" group fills itself from the Discord event's "Guests:" line. Leave it empty.
+// Every other group is yours to edit. A group with no names is left out.
+
 # Guests
-# Thanks
-The This EVE Life Discord
+
+# This EVE Life Staff
+Kalkin84 | Discord Mod
+Broodin | Discord Manager
+Ragnar Prime | Twitch Mod
+Sopleb | Technical Adviser and Twitch Mod
+Xandrossian | Technical Adviser and Twitch Mod
+CrashNaps | Streaming Mentor
+Shadsquatch | Streaming Mentor
+
+# Special Thanks
+Schandlich | EQOA & FFXI Static Legend
+Breezy | EQOA & FFXI Static Legend. Gone too soon, Miss you
+Antilles | FFXI & WoW Static Legend
+WarbirdTD | Without you saving me from FaerieFlower I'd still be in WoW
+Mrs Neal | my 4th grade teacher who said I'd never amount to anything
+FaerieFlower and WarriorMike | Thank you for kicking me from the WoW Guild in 2007
+Innominate | You yelled at me in Merkelchens back yard and I found a better job. Miss you
+Reagalan | For the FC'ing the funnest 8 hours of EVE I've ever had
+Brisc Rubal and Merkelchen | For putting up with all my crazy nonsense on Reddit
+Hyperviper1 | Making me a better EVE Player in 2008 for getting mad about me flying a Blackbird
+FC Jotunn | Never getting mad at all the memes and nonsense I send your way
+Alterari Phoenix | For explaining that I did not need to offline my prop mod when you said "prop mods off" when entering wormholes
+Everyone in the chat
