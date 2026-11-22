@@ -1,19 +1,9 @@
 {
-  "updated": "2026-11-21T21:10:01Z",
+  "updated": "2026-11-22T01:17:17Z",
   "source": "discord",
   "nextShows": [
     {
-      "name": "EVERYONE'S WELCOME IN NEW EDEN: THE SERGAL JERK STORY | THIS EVE LIFE EPISODE #61",
-      "desc": "Ezra Scarlit and Nurbs Garemoko join me on the show to discuss Sergal Jerk, home of EVE Online's Furious Furries. They'll outline how",
-      "at": "2026-11-21T23:00:00.000Z",
-      "endAt": "2026-11-22T00:00:00.000Z",
-      "guests": [
-        "Erza Scarlit",
-        "Nurbs Garemoko"
-      ]
-    },
-    {
-      "name": "GOON HISTORY: NULLSEC DEEP DIVE W/ RANGER GAMA | EVE ONLINE | THIS EVE LIFE EPISODE #62",
+      "name": "GOON HISTORY: NULLSEC DEEP DIVE W/ RANGER GAMA | EVE ONLINE | THIS EVE LIFE EPISODE #61",
       "desc": "Goonswarm's Chief of Staff Ranger Gama joins me on the show to talk the past, how we got to the present, and what it's like helping herd a …",
       "at": "2026-11-22T17:00:00.000Z",
       "endAt": "2026-11-22T18:00:00.000Z",
@@ -22,7 +12,7 @@
       ]
     },
     {
-      "name": "EVE ONLINE LOWSEC EDUCATION W/ YOUNGPUKE2 | THIS EVE LIFE EPISODE #60",
+      "name": "EVE ONLINE LOWSEC EDUCATION W/ YOUNGPUKE2 | THIS EVE LIFE EPISODE #62",
       "desc": "YoungPuke2, the most famous Lowsec CSM Ever, joins me on the show to educate me on how Lowsec works, who are the major movers and shakers,  …",
       "at": "2026-11-22T22:00:00.000Z",
       "endAt": "2026-11-22T23:00:00.000Z",
@@ -35,6 +25,13 @@
       "desc": "No Show, Ceema on Vacation",
       "at": "2026-11-28T22:00:00.000Z",
       "endAt": "2026-11-28T23:00:00.000Z",
+      "guests": []
+    },
+    {
+      "name": "NO SHOW, CEEMA ON VACATION",
+      "desc": "No Show, Ceema on Vacation",
+      "at": "2026-11-29T22:00:00.000Z",
+      "endAt": "2026-11-29T23:00:00.000Z",
       "guests": []
     }
   ]
