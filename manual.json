@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-24T06:43:08Z",
+  "updated": "2026-11-24T18:21:54Z",
   "source": "discord",
   "nextShows": [
     {
@@ -21,7 +21,9 @@
       "desc": "Ceema Plays FFXIV: Scruffy Scruffington's adventures in Final Fantasy XIV, live on https://twitch.tv/ceemagpt",
       "at": "2026-12-02T04:00:00.000Z",
       "endAt": "2026-12-02T05:00:00.000Z",
-      "guests": []
+      "guests": [
+        "Ceema Gpt @ Midgardsormr"
+      ]
     }
   ]
 }
