@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-26T12:29:39Z",
+  "updated": "2026-11-27T22:16:30Z",
   "source": "discord",
   "nextShows": [
     {
@@ -31,6 +31,15 @@
       "at": "2026-12-04T04:00:00.000Z",
       "endAt": "2026-12-04T05:00:00.000Z",
       "guests": []
+    },
+    {
+      "name": "BROKEN LP IS WRONG TWICE A DAY W/ SL1MJ1M | THIS EVE LIFE EPISODE #63",
+      "desc": "Sl1mJ1m joins me to share the secrets of being a successful solo PVPer in a world with more broken LP's than John Cusack in High Fidelity",
+      "at": "2026-12-05T21:00:00.000Z",
+      "endAt": "2026-12-05T22:00:00.000Z",
+      "guests": [
+        "Sl1mJ1m"
+      ]
     }
   ]
 }
